@@ -197,6 +197,14 @@ layout src
 
 (gdb) set solib-search-path /noexist:/home/evan/gdbso/mips
 
+## 添加符号文件
+
+符号文件也就是动态库
+
+```
+add-symbol-file  /usr/lib/libmount.so.1
+```
+
 # VIM-GDB调试代码
 
 ```
@@ -798,10 +806,108 @@ sudo /sbin/ldconfig
 
 # mount 命令源码
 
-mnt_context_do_mount
+前提：libmount.so.1 也是我重新编的 所以有符号信息能够进行调试
 
-# QT安装
+加载模块文件挂上咱们的文件系统
+
+```
+sudo insmod /mnt/c/Users/admin/linux/mod/registerFileSystem/main.ko
+```
+
+进入代码目录
+
+```
+cd /mnt/c/Users/admin/linux/util-linux-2.41.1/usr/bin
+```
+
+相关gdb命令
+
+```
+file /mnt/c/Users/admin/linux/util-linux-2.41.1/usr/bin/mount
+add-symbol-file /usr/lib/libmount.so.1
+add-symbol-file /lib/x86_64-linux-gnu/libc.so.6
+set args -t cstest fdfd mp
+b do_mount
+b /mnt/c/Users/admin/linux/util-linux-2.41.1/libmount/src/context_mount.c:549
+b hook_create_mount
+b fsconfig
+```
+
+跟踪记录
+
+```
+(gdb) p call_hook
+$2 = {int (struct libmnt_context *, struct hookset_hook *)} 0x7ffff7f76740 <call_hook>
+hook_create_mount
+```
+
+# QT安装镜像命令
 
 ```
 qt-online-installer-windows-x64-4.10.0.exe --mirror http://mirrors.ustc.edu.cn/qtproject
+```
+
+# 编译GLIBC
+
+[下载链接](https://mirror-hk.koddos.net/lfs/lfs-packages/12.4/)
+
+下载glibc-2.42-fhs-1.patch和glibc-2.42.tar.xz
+
+```
+patch -Np1 -i ../glibc-2.42-fhs-1.patch
+mkdir -v build
+cd       build
+../configure                             \
+      --prefix=/usr                      \
+      --build=$(../scripts/config.guess) \
+      --disable-nscd                     \
+      libc_cv_slibdir=/usr/lib           \
+      --enable-kernel=5.4
+make -j8
+make install
+```
+
+# 当前所用vimrc文件
+
+```
+if has('mouse')
+        set mouse-=a
+endif
+packadd! termdebug
+```
+
+
+
+# 部署cesium项目
+
+下载源码
+
+解压
+
+```
+npm init -y
+npm start
+```
+
+
+
+# 重装系统后需要的命令
+
+```
+sudo apt-get install vim
+sudo -s
+cat >> /root/.vimrc <<EOF
+if has('mouse')
+        set mouse-=a
+endif
+packadd! termdebug
+EOF
+
+sudo rm /etc/apt/sources.list
+cat >> /etc/apt/sources.list <<EOF
+deb http://ftp.cn.debian.org/debian/ trixie main contrib non-free non-free-firmware
+EOF
+
+sudo apt-get install make
+sudo apt-get install gcc
 ```
