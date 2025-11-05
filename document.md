@@ -295,7 +295,19 @@ init_nsproxy (namespace的根节点)
 
 [inode_init_always_gfp](https://elixir.bootlin.com/linux/v6.16.3/C/ident/inode_init_always_gfp) 连接inode与[super_block](https://elixir.bootlin.com/linux/v6.16.3/C/ident/super_block) 的
 
+proc_lookup_de  从这就能看出来dentry是VFS要查找目录先生成的 dir是他的父节点
+
 # 模块demo
+
+## makefile内容
+
+```
+obj-m := main.o
+all:
+        make -C /mnt/c/Users/admin/linux/linux-6.16.3/modules/lib/modules/6.16.3/build M=$(PWD) modules
+```
+
+/mnt/c/Users/admin/linux/linux-6.16.3/modules/lib/modules/6.16.3/builds 是编译完sudo make modules_install INSTALL_MOD_PATH=/your/custom/path  安装的 也就是能在本机编译任何内核的module
 
 ## 列出当前所有pid
 
@@ -808,6 +820,8 @@ sudo /sbin/ldconfig
 
 前提：libmount.so.1 也是我重新编的 所以有符号信息能够进行调试
 
+现在都装默认目录下了  怕个球头 大不了重装系统
+
 加载模块文件挂上咱们的文件系统
 
 ```
@@ -817,15 +831,15 @@ sudo insmod /mnt/c/Users/admin/linux/mod/registerFileSystem/main.ko
 进入代码目录
 
 ```
-cd /mnt/c/Users/admin/linux/util-linux-2.41.1/usr/bin
+cd /usr/bin
 ```
 
 相关gdb命令
 
 ```
-file /mnt/c/Users/admin/linux/util-linux-2.41.1/usr/bin/mount
-add-symbol-file /usr/lib/libmount.so.1
-add-symbol-file /lib/x86_64-linux-gnu/libc.so.6
+file mount
+add-symbol-file /lib/libmount.so.1
+add-symbol-file /usr/local/lib/libc.so.6
 set args -t cstest fdfd mp
 b do_mount
 b /mnt/c/Users/admin/linux/util-linux-2.41.1/libmount/src/context_mount.c:549
@@ -876,8 +890,6 @@ endif
 packadd! termdebug
 ```
 
-
-
 # 部署cesium项目
 
 下载源码
@@ -889,7 +901,26 @@ npm init -y
 npm start
 ```
 
+# cscope使用
 
+建立索引文件
+
+```
+进入源码目录
+cscope -b -v
+```
+
+在vim中加入数据索引文件
+
+```
+:cs add ./cscope.out
+```
+
+查找结构体定义
+
+```
+:cs f g 结构体名称
+```
 
 # 重装系统后需要的命令
 
@@ -911,3 +942,59 @@ EOF
 sudo apt-get install make
 sudo apt-get install gcc
 ```
+
+# ls调试命令
+
+基本代码都在这函数里面 
+
+print_dir（打开文件并输出）
+
+statx  获取状态的系统调用
+
+do_lstat 获取状态
+
+```
+cd /usr/local/bin
+b print_dir
+set args -l /mnt/c/Users/admin/linux/linux-6.16.3/mod/registerFileSystem/mp
+```
+
+# VFS
+
+d_delete 为啥为1是不解锁？
+
+unlink中解锁了
+
+inode是谁提供的？
+
+super_block  参考proc_get_inode
+
+# WRITE_ONCE 和READ_ONCE
+
+意义在哪？ 只是作为静态检查？那为什么 只有最后一个检查了  哦哦可能因为都一样 所以检查最后一个即可
+
+# 查看宏展开的源代码
+
+在源码目录下
+
+```
+find -name "*.o.cmd"
+```
+
+找到你要查看的源代码文件名称例如 ./fs/proc/.inode.o.cmd
+
+vim打开它
+
+找到gcc编译的那个配置 例如
+
+```
+gcc -Wp,-MMD,fs/proc/.inode.o.d -nostdinc -I./arch/x86/include -I./arch/x86/include/generated -I./include -I./include -I./arch/x86/include/uapi -I./arch/x86/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -Werror -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fcf-protection=branch -fno-jump-tables -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -march=x86-64 -mtune=generic -mno-red-zone -mcmodel=kernel -mstack-protector-guard-reg=gs -mstack-protector-guard-symbol=__ref_stack_chk_guard -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -O2 -fno-allow-store-data-races -fstack-protector-strong -fomit-frame-pointer -ftrivial-auto-var-init=zero -fno-stack-clash-protection -fmin-function-alignment=16 -fstrict-flex-arrays=3 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wno-address-of-packed-member -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wno-dangling-pointer -Wvla-larger-than=1 -Wno-pointer-sign -Wcast-function-type -Wno-array-bounds -Wno-stringop-overflow -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wenum-conversion -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-packed-not-aligned -Wno-format-overflow -Wno-format-truncation -Wno-stringop-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -gdwarf-5    -DKBUILD_MODFILE='"fs/proc/proc"' -DKBUILD_BASENAME='"inode"' -DKBUILD_MODNAME='"proc"' -D__KBUILD_MODNAME=kmod_proc -c -o fs/proc/inode.o fs/proc/inode.c
+```
+
+复制出来 在后面加上-save-temps=obj
+
+```
+gcc -Wp,-MMD,fs/proc/.inode.o.d -nostdinc -I./arch/x86/include -I./arch/x86/include/generated -I./include -I./include -I./arch/x86/include/uapi -I./arch/x86/include/generated/uapi -I./include/uapi -I./include/generated/uapi -include ./include/linux/compiler-version.h -include ./include/linux/kconfig.h -include ./include/linux/compiler_types.h -D__KERNEL__ -Werror -std=gnu11 -fshort-wchar -funsigned-char -fno-common -fno-PIE -fno-strict-aliasing -mno-sse -mno-mmx -mno-sse2 -mno-3dnow -mno-avx -fcf-protection=branch -fno-jump-tables -m64 -falign-jumps=1 -falign-loops=1 -mno-80387 -mno-fp-ret-in-387 -mpreferred-stack-boundary=3 -mskip-rax-setup -march=x86-64 -mtune=generic -mno-red-zone -mcmodel=kernel -mstack-protector-guard-reg=gs -mstack-protector-guard-symbol=__ref_stack_chk_guard -Wno-sign-compare -fno-asynchronous-unwind-tables -mindirect-branch=thunk-extern -mindirect-branch-register -mindirect-branch-cs-prefix -mfunction-return=thunk-extern -fno-jump-tables -fpatchable-function-entry=16,16 -fno-delete-null-pointer-checks -O2 -fno-allow-store-data-races -fstack-protector-strong -fomit-frame-pointer -ftrivial-auto-var-init=zero -fno-stack-clash-protection -fmin-function-alignment=16 -fstrict-flex-arrays=3 -fno-strict-overflow -fno-stack-check -fconserve-stack -fno-builtin-wcslen -Wall -Wextra -Wundef -Werror=implicit-function-declaration -Werror=implicit-int -Werror=return-type -Werror=strict-prototypes -Wno-format-security -Wno-trigraphs -Wno-frame-address -Wno-address-of-packed-member -Wmissing-declarations -Wmissing-prototypes -Wframe-larger-than=2048 -Wno-main -Wno-dangling-pointer -Wvla-larger-than=1 -Wno-pointer-sign -Wcast-function-type -Wno-array-bounds -Wno-stringop-overflow -Wno-alloc-size-larger-than -Wimplicit-fallthrough=5 -Werror=date-time -Werror=incompatible-pointer-types -Werror=designated-init -Wenum-conversion -Wunused -Wno-unused-but-set-variable -Wno-unused-const-variable -Wno-packed-not-aligned -Wno-format-overflow -Wno-format-truncation -Wno-stringop-truncation -Wno-override-init -Wno-missing-field-initializers -Wno-type-limits -Wno-shift-negative-value -Wno-maybe-uninitialized -Wno-sign-compare -Wno-unused-parameter -g -gdwarf-5    -DKBUILD_MODFILE='"fs/proc/proc"' -DKBUILD_BASENAME='"inode"' -DKBUILD_MODNAME='"proc"' -D__KBUILD_MODNAME=kmod_proc -c -o fs/proc/inode.o fs/proc/inode.c -save-temps=obj
+```
+
+即可在该目录底下看到inode.i 文件 该文件就是宏展开后的
