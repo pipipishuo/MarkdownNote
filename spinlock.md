@@ -268,10 +268,6 @@ static __always_inline void queued_spin_lock(struct qspinlock *lock)
 
 [queued_spin_lock_slowpath](https://elixir.bootlin.com/linux/v6.16.3/C/ident/queued_spin_lock_slowpath) 就看源码吧 也能用源码目录下的qspinlock.i作参考 这个是宏展开后的
 
-
-
-
-
 ```
  static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) __attribute__((__always_inline__)) bool atomic_try_cmpxchg_acquire(atomic_t *v, int *old, int new)
 {
