@@ -251,7 +251,15 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=debian.img,if=virtio
 
 # qemu中使用自己的镜像启动debian
 
+
+
+
+
+```
 qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage -hda /mnt/c/Users/admin/linux/debian.img -append "root=/dev/sda1 rw" -s -S
+```
+
+
 
 # qemu共享文件
 
@@ -998,3 +1006,35 @@ gcc -Wp,-MMD,fs/proc/.inode.o.d -nostdinc -I./arch/x86/include -I./arch/x86/incl
 ```
 
 即可在该目录底下看到inode.i 文件 该文件就是宏展开后的
+
+# 打包QML项目
+
+```
+windeployqt.exe --qmldir D:\project\groundController D:\project\groundController\build\Desktop_Qt_6_8_3_MSVC2022_64bit-Release\groundStation.exe
+```
+
+--qmldir 后面跟的是源代码目录 注意！！是源！！代！！码！！根目录 不是exe目录
+
+# 关于CPU核数确定
+
+secondary_startup_64
+
+set_nr_cpu_ids
+
+[start_kernel](https://elixir.bootlin.com/linux/v6.16.3/C/ident/start_kernel)
+
+topology_init_possible_cpus
+
+[topo_get_cpunr](https://elixir.bootlin.com/linux/v6.16.3/C/ident/topo_get_cpunr)
+
+acpi_parse_madt_lapic_entries
+
+[acpi_parse_entries_array](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_parse_entries_array)
+
+topo_info
+
+acpi_parse_entries_array
+
+topo_get_cpunr
+
+/mnt/c/Users/admin/linux/linux-6.16.3/lib/fw_table.c:175
