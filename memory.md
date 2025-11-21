@@ -57,6 +57,20 @@ static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attr
 }
 ```
 
-最小收集page
+最小收集page调用栈
 
 [__rmqueue_smallest](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__rmqueue_smallest)
+
+[__rmqueue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__rmqueue)
+
+[rmqueue_buddy](https://elixir.bootlin.com/linux/v6.16.3/C/ident/rmqueue_buddy)
+
+[rmqueue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/rmqueue)
+
+[get_page_from_freelist](https://elixir.bootlin.com/linux/v6.16.3/C/ident/get_page_from_freelist)
+
+[__alloc_frozen_pages_noprof](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__alloc_frozen_pages_noprof)
+
+[alloc_slab_page](https://elixir.bootlin.com/linux/v6.16.3/C/ident/alloc_slab_page)
+
+[allocate_slab](https://elixir.bootlin.com/linux/v6.16.3/C/ident/allocate_slab)

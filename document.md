@@ -889,6 +889,7 @@ make install
 if has('mouse')
         set mouse-=a
 endif
+
 packadd! termdebug
 ```
 
@@ -1032,3 +1033,23 @@ acpi_parse_entries_array
 topo_get_cpunr
 
 /mnt/c/Users/admin/linux/linux-6.16.3/lib/fw_table.c:175
+
+
+
+[set_freepointer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_freepointer)
+
+[allocate_slab](https://elixir.bootlin.com/linux/v6.16.3/C/ident/allocate_slab)
+
+[do_slab_free](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_slab_free)
+
+[build_detached_freelist](https://elixir.bootlin.com/linux/v6.16.3/C/ident/build_detached_freelist)
+
+[get_freepointer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/get_freepointer)
+
+[__do_kmalloc_node](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__do_kmalloc_node)
+
+[kzalloc_noprof](https://elixir.bootlin.com/linux/v6.16.3/C/ident/kzalloc_noprof)
+
+[acpi_tb_resize_root_table_list](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_tb_resize_root_table_list)
+
+[acpi_allocate_root_table](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_allocate_root_table)
