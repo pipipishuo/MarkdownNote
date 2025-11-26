@@ -123,6 +123,16 @@ init_mm 挺关键的  她应该是内存管理的核心变量  第一个
 
 [__pte_alloc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__pte_alloc)  收集pte用的  这是我今天想找的
 
+[set_ptes](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_ptes)  这应该就是安pte目录
+
+[__pmd_alloc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__pmd_alloc) 这个不太一样
+
+[preallocate_vmalloc_pages](https://elixir.bootlin.com/linux/v6.16.3/C/ident/preallocate_vmalloc_pages)
+
+[walk_to_pmd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/walk_to_pmd)  应该挺有用的  应该揭示了pgd pud pmd 怎么找的
+
+[pmd_offset](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pmd_offset)  很好的案例怎么根据pud找到pmd的
+
 # 如何分配page  V6.16版本
 
 从小往大找 找到最近的那个大的
@@ -138,3 +148,17 @@ $$
 $$
 
 前面那一堆再加一次2的4次方即可  牛逼！
+
+# early_top_pgt ，init_top_pgt ，init_mm->pgd 三者之间的关系
+
+根据我现在的观察 
+
+early_top_pgt 是内核早起构造的 构造完把第511项个给init_top_pgt 这样两者都在fff那指向同一块物理内存了（因为511的二进制就全是1）
+
+init_mm->pgd的值是跟init_top_pgt一样的 这样就都能对上了
+
+# pdg p4d pud pmd pte 都怎么存的
+
+也是按页存！想不到吧
+
+就是先分配个页  然后把数据写到这个页中  分配页的方式跟分配普通的页的方式一模一样  这就存在一个问题  怎么能保证在写入页表项时不至于报缺页异常呢？也就是虚拟地址能转为物理地址，按照现在观察 我觉得是init_mm->pgd 已经安排好了这部分 所以不怕它缺页 要不然说不通
