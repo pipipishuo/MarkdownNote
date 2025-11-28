@@ -162,3 +162,22 @@ init_mm->pgd的值是跟init_top_pgt一样的 这样就都能对上了
 也是按页存！想不到吧
 
 就是先分配个页  然后把数据写到这个页中  分配页的方式跟分配普通的页的方式一模一样  这就存在一个问题  怎么能保证在写入页表项时不至于报缺页异常呢？也就是虚拟地址能转为物理地址，按照现在观察 我觉得是init_mm->pgd 已经安排好了这部分 所以不怕它缺页 要不然说不通
+
+
+
+# 探索物理内存大小
+
+[memblock_add_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memblock_add_range)
+
+[e820__memblock_setup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memblock_setup)
+
+
+
+
+
+[detect_memory_e820](https://elixir.bootlin.com/linux/v6.16.3/C/ident/detect_memory_e820)  应该是用了  在启动的时候但vmlinux中没有查到
+
+[e820__memory_setup_default](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memory_setup_default)
+
+[e820__memory_setup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memory_setup)
+

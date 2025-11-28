@@ -1008,6 +1008,10 @@ gcc -Wp,-MMD,fs/proc/.inode.o.d -nostdinc -I./arch/x86/include -I./arch/x86/incl
 
 即可在该目录底下看到inode.i 文件 该文件就是宏展开后的
 
+# Debugging kernel and modules via gdb
+
+[Debugging kernel and modules via gdb — The Linux Kernel documentation](https://docs.kernel.org/process/debugging/gdb-kernel-debugging.html)
+
 # 打包QML项目
 
 ```
