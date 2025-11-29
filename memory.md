@@ -81,7 +81,7 @@ static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attr
 
 [memmap_init_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memmap_init_range)
 
-[memmap_init_zone_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memmap_init_zone_range)
+[memmap_init_zone_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memmap_init_zone_range)  关于zone大小确定的
 
 [memmap_init](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memmap_init)
 
@@ -169,9 +169,9 @@ init_mm->pgd的值是跟init_top_pgt一样的 这样就都能对上了
 
 [memblock_add_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memblock_add_range)
 
-[e820__memblock_setup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memblock_setup)
+[e820__memblock_setup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memblock_setup)  这个把e820和memblock.memory连接到一起的  这个很关键
 
-
+主要变量 [e820_table](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820_table) 
 
 
 
@@ -180,4 +180,54 @@ init_mm->pgd的值是跟init_top_pgt一样的 这样就都能对上了
 [e820__memory_setup_default](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memory_setup_default)
 
 [e820__memory_setup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/e820__memory_setup)
+
+
+
+# zone大小确定
+
+
+
+[memmap_init](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memmap_init)关于zone大小确定的
+
+[__next_mem_pfn_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__next_mem_pfn_range) 这个是把memblock.memory与zone连接到一起的  算出out_start_pfn和out_end_pfn 然后赋值给zone
+
+
+
+# node初始化
+
+[alloc_node_data](https://elixir.bootlin.com/linux/v6.16.3/C/ident/alloc_node_data) node初始化
+
+[__next_mem_range_rev](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__next_mem_range_rev)  这个里面解答了通过memblock.memory和memblock.reservered分配的node地址
+
+
+
+# 从e820到zone的流程
+
+e820__memblock_setup  这个把e820和memblock.memory连接到一起的  这个很关键
+
+initmem_init 里面的alloc_node_data初始化node
+
+zone_sizes_init （在setup_arch中是x86_init.paging.pagetable_init）里的 memmap_init （其实是这个[__next_mem_pfn_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__next_mem_pfn_range)）确定了 将memblock.memory与zone连接到一起的  算出out_start_pfn和out_end_pfn 然后赋值给zone 然后放到node中
+
+# memblock变量
+
+定义处：mm / memblock.c  128  v6.16
+
+```
+struct memblock memblock __initdata_memblock = {
+	.memory.regions		= memblock_memory_init_regions,
+	.memory.max		= INIT_MEMBLOCK_MEMORY_REGIONS,
+	.memory.name		= "memory",
+
+	.reserved.regions	= memblock_reserved_init_regions,
+	.reserved.max		= INIT_MEMBLOCK_RESERVED_REGIONS,
+	.reserved.name		= "reserved",
+
+	.bottom_up		= false,
+	.current_limit		= MEMBLOCK_ALLOC_ANYWHERE,
+};
+
+```
+
+关于memblock.reserved是从哪开始加的 [__memblock_reserve](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__memblock_reserve)   断点打这就知道了
 
