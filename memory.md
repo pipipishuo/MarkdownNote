@@ -231,3 +231,69 @@ struct memblock memblock __initdata_memblock = {
 
 关于memblock.reserved是从哪开始加的 [__memblock_reserve](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__memblock_reserve)   断点打这就知道了
 
+
+
+# 缺页中断
+
+[finish_fault](https://elixir.bootlin.com/linux/v6.16.3/C/ident/finish_fault)  这是第一个入手点
+
+[set_ptes](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_ptes)  这也是  准备设置页了都
+
+
+
+# 存page数据的物理地址是放哪的
+
+线性地址是这儿 
+
+```
+ffffea0000000000 |  -22    TB | ffffeaffffffffff |    1 TB | virtual memory map (vmemmap_base)
+```
+
+## SPARSEMEM
+
+参考链接https://www.kernel.org/doc/html/latest/mm/memory-model.html#sparsemem 
+
+这个应该是我要的  
+
+```
+The sparse vmemmap uses a virtually mapped memory map to optimize pfn_to_page and page_to_pfn operations. There is a global struct page *vmemmap pointer that points to a virtually contiguous array of struct page objects. A PFN is an index to that array and the offset of the struct page from vmemmap is the PFN of that page.
+
+To use vmemmap, an architecture has to reserve a range of virtual addresses that will map the physical pages containing the memory map and make sure that vmemmap points to that range. In addition, the architecture should implement vmemmap_populate() method that will allocate the physical memory and create page tables for the virtual memory map. If an architecture does not have any special requirements for the vmemmap mappings, it can use default vmemmap_populate_basepages() provided by the generic memory management.
+```
+
+[vmemmap_populate](https://elixir.bootlin.com/linux/v6.16.3/C/ident/vmemmap_populate)  关键函数
+
+SPARSEMEM是按128M为一段映射的 内存如果是512M就执行四次vmemmap_populate
+
+[memory_present](https://elixir.bootlin.com/linux/v6.16.3/C/ident/memory_present)  从这分的段 为啥要分段啊  哦！因为在[vmemmap_set_pmd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/vmemmap_set_pmd) 中看到制作的pte就是2M分页去做的  这样说内核都是2M分页了？  128M的内存正好需要2M的page数组去存 
+$$
+32768*64=2*1024*1024
+$$
+[__populate_section_memmap](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__populate_section_memmap)  将页值转为线性地址
+
+```
+unsigned long start = (unsigned long) pfn_to_page(pfn);
+```
+
+
+
+[vmemmap_alloc_block_buf](https://elixir.bootlin.com/linux/v6.16.3/C/ident/vmemmap_alloc_block_buf) 这个是收集物理地址的函数返回的是个线性地址 第一次是这个位置0xffff88801f600000 看着很眼熟   我猜应该紧随代码后面
+
+
+
+[vmemmap_set_pmd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/vmemmap_set_pmd) 这里面把上面收集到的线性地址转为物理地址并做成了pmd页
+
+```
+pte_t entry;
+
+	entry = pfn_pte(__pa(p) >> PAGE_SHIFT,
+			PAGE_KERNEL_LARGE);
+```
+
+[sparse_buffer_init](https://elixir.bootlin.com/linux/v6.16.3/C/ident/sparse_buffer_init)  
+
+sparsemap_buf  存放page数组的基地址变量
+
+这个数组也是分过来的 好怪啊感觉
+
+哦不怪 [__next_mem_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__next_mem_range) 是通过这个直接分的  没走那个[__rmqueue_smallest](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__rmqueue_smallest)的分配路子  我说呢 如果这个再走这个路子  那不死循环了?
