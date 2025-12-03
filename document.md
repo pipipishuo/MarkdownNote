@@ -260,13 +260,13 @@ qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/b
 宿主机输入这个
 
 ```
-qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage -hda /mnt/c/Users/admin/linux/debian.img -append "root=/dev/sda1 rw" -virtfs local,path=/mnt/c/Users/admin/linux/mod,mount_tag=host0,security_model=passthrough,id=host0
+qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage -hda /mnt/c/Users/admin/linux/debian.img -append "root=/dev/sda1 rw" -virtfs local,path=/mnt/c/Users/admin/linux/linux-6.16.3/mod,mount_tag=host0,security_model=passthrough,id=host0
 ```
 
 虚拟机中输入这个
 
 ```
-sudo mount -t 9p -o trans=virtio,version=9p2000.L host0 /mnt/shared
+sudo mount -t 9p -o trans=virtio,version=9p2000.L host0 /mnt/share
 ```
 
 # qemu单独启动debian
@@ -299,7 +299,7 @@ init_nsproxy (namespace的根节点)
 
 proc_lookup_de  从这就能看出来dentry是VFS要查找目录先生成的 dir是他的父节点
 
-# 模块demo
+# 自定义文件系统
 
 ## makefile内容
 
@@ -310,6 +310,29 @@ all:
 ```
 
 /mnt/c/Users/admin/linux/linux-6.16.3/modules/lib/modules/6.16.3/builds 是编译完sudo make modules_install INSTALL_MOD_PATH=/your/custom/path  安装的 也就是能在本机编译任何内核的module
+
+WSL版本
+
+```
+#Makefile**********************************************************
+obj-m := main.o
+all:
+    make -C /mnt/c/Users/admin/linux/WSL2-Linux-Kernel-linux-msft-wsl-6.6.y/modules/lib/modules/6.6.87.2-microsoft-standard-WSL2/build M=$(PWD) modules
+```
+
+
+
+## 相关命令
+
+```
+sudo insmod main.ko
+sudo mount -t cstest fdfd mp
+
+sudo umount mp
+sudo rmmod main.ko
+```
+
+
 
 ## 列出当前所有pid
 
@@ -607,6 +630,254 @@ module_init(init_hello_module);                    //module_init()宏，用于�
 module_exit(exit_hello_module);                    //module_exit()宏，用于析构
 ```
 
+WSL版本  这个比上面新  明天验证一下
+
+```
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/smp.h> 
+#include <linux/fs.h>
+#include <linux/nsproxy.h>
+#include <linux/pid_namespace.h>
+#include <linux/types.h>
+#include <linux/errno.h>
+#include <linux/tty.h>
+#include <linux/tty_driver.h>
+#include <linux/tty_flip.h>
+#include <linux/serial.h>
+#include <linux/timer.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/sched/signal.h>
+#include <linux/wait.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/serdev.h>
+#include <linux/fs_context.h>
+#include <linux/user_namespace.h>
+#include <linux/string.h>
+static struct kmem_cache *proc_inode_cachep __ro_after_init;
+static void init_once(void *foo)
+{
+	struct inode *ei = (struct inode *) foo;
+
+	inode_init_once(ei);
+}
+static void proc_init_kmemcache(void)
+{
+	proc_inode_cachep = kmem_cache_create("proc_inode_cache",
+					     sizeof(struct inode),
+					     0, (SLAB_RECLAIM_ACCOUNT|
+						SLAB_ACCOUNT|
+						SLAB_PANIC),
+					     init_once);
+}
+static struct inode *proc_alloc_inode(struct super_block *sb)
+{
+	struct inode *vfs_inode;
+	vfs_inode = alloc_inode_sb(sb, proc_inode_cachep, GFP_KERNEL);
+	if (!vfs_inode)
+		return NULL;
+	return vfs_inode;
+}
+static void proc_free_inode(struct inode *inode)
+{
+	kmem_cache_free(proc_inode_cachep,inode);
+}
+static void proc_evict_inode(struct inode *inode)
+{
+	truncate_inode_pages_final(&inode->i_data);
+	clear_inode(inode);
+}
+static int proc_show_options(struct seq_file *seq, struct dentry *root)
+{
+	return 0;
+}
+const struct super_operations proc_sops = {
+	.alloc_inode	= proc_alloc_inode,
+	.free_inode	= proc_free_inode,
+	.drop_inode	= generic_delete_inode,
+	.evict_inode	= proc_evict_inode,
+	.statfs		= simple_statfs,
+	.show_options	= proc_show_options,
+};
+static void proc_kill_sb(struct super_block *sb)
+{
+	kill_anon_super(sb);
+	return;
+}
+static void proc_fs_context_free(struct fs_context *fc)
+{
+	void *ctx = fc->fs_private;
+	printk("ctx address  %p\n",ctx);
+	return;
+}
+static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+{
+	return 0;
+}
+
+
+static int proc_reconfigure(struct fs_context *fc){
+	struct super_block *sb = fc->root->d_sb;
+	sync_filesystem(sb);
+	return 0;
+}
+static int proc_root_getattr(struct mnt_idmap *idmap,
+			     const struct path *path, struct kstat *stat,
+			     u32 request_mask, unsigned int query_flags)
+{
+	generic_fillattr(&nop_mnt_idmap, request_mask, d_inode(path->dentry),
+			 stat);
+	return 0;
+}
+static int proc_pid_readdir(struct file *file, struct dir_context *ctx)
+{
+	if(ctx->pos==789){
+		return 0;
+	}
+	char a='a';
+	for(int i=1;i<5;i++){
+		a++;
+		dir_emit(ctx,&a,1,i,S_IFDIR);
+	}
+	ctx->pos=789;
+	return 0;
+}
+static int proc_root_readdir(struct file *file, struct dir_context *ctx)
+{
+	return proc_pid_readdir(file, ctx);
+}
+static const struct file_operations proc_root_operations = {
+	.read		 = generic_read_dir,
+	.iterate_shared	 = proc_root_readdir,
+	.llseek		= generic_file_llseek,
+};
+static int inodenum=1;
+static struct dentry *proc_root_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
+{
+
+        struct inode *inode = new_inode(dir->i_sb);
+        inode->i_private = 0;
+        inode->i_ino = inodenum;
+        inodenum++;
+        simple_inode_init_ts(inode);
+
+        inode->i_mode = S_IRUGO;
+        inode->i_uid = GLOBAL_ROOT_UID;;
+        inode->i_gid = GLOBAL_ROOT_GID;
+        inode->i_mtime.tv_sec=365;
+        //inode->i_mtime_sec=365;
+        return d_splice_alias(inode, dentry);
+    
+    return NULL;
+}
+/*
+ * proc root can do almost nothing..
+ */
+static const struct inode_operations proc_root_inode_operations = {
+	.lookup		= proc_root_lookup,
+	.getattr	= proc_root_getattr,
+};
+static struct inode *proc_get_inode(struct super_block *sb)
+{
+	struct inode *inode = new_inode(sb);
+
+	if (!inode) {
+		return NULL;
+	}
+
+	inode->i_private = 0;
+	inode->i_ino = inodenum;
+    inodenum++;
+	simple_inode_init_ts(inode);
+
+	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
+	inode->i_uid = GLOBAL_ROOT_UID;;
+	inode->i_gid = GLOBAL_ROOT_GID;
+	
+
+	if (S_ISREG(inode->i_mode)) {
+
+	} else if (S_ISDIR(inode->i_mode)) {
+		inode->i_op = &proc_root_inode_operations;
+		inode->i_fop = &proc_root_operations;
+	} else if (S_ISLNK(inode->i_mode)) {
+		
+	} else {
+		BUG();
+	}
+	return inode;
+}
+static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+{
+
+	/* User space would break if executables or devices appear on proc */
+	s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
+	s->s_flags |= SB_NODIRATIME | SB_NOSUID | SB_NOEXEC;
+	s->s_blocksize = 1024;
+	s->s_blocksize_bits = 10;
+	s->s_magic = 1512421;
+	s->s_op = &proc_sops;
+	s->s_time_gran = 1;
+	s->s_fs_info =0;
+	s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
+	struct inode *root_inode;
+	/* procfs dentries and inodes don't require IO to create */
+	s->s_shrink.seeks = 0;
+	root_inode=proc_get_inode(s);
+	s->s_root = d_make_root(root_inode);
+	return 0;
+}
+static int proc_get_tree(struct fs_context *fc)
+{
+	return get_tree_nodev(fc, proc_fill_super);
+}
+static const struct fs_context_operations proc_fs_context_ops = {
+        .free           = proc_fs_context_free,
+        .parse_param    = proc_parse_param,
+        .get_tree       = proc_get_tree,
+        .reconfigure    = proc_reconfigure,
+}; 
+static int proc_init_fs_context(struct fs_context *fc)
+{
+        struct pid_namespace *pid_ns = get_pid_ns(task_active_pid_ns(current));
+        put_user_ns(fc->user_ns);
+        fc->user_ns = get_user_ns(pid_ns->user_ns);
+        put_pid_ns(pid_ns);
+        fc->fs_private = (void*)1245122;
+        fc->ops = &proc_fs_context_ops;
+        return 0;
+}
+struct file_system_type cstest_fs_type = {
+        .name = "cstest",
+        .fs_flags               = FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
+        .init_fs_context        = proc_init_fs_context,
+	.kill_sb		= proc_kill_sb,
+	.fs_flags		= FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
+};
+static int __init init_hello_module(void)                //__init进行注明
+{
+	proc_init_kmemcache();
+        register_filesystem(&cstest_fs_type);
+        return 0;
+}
+static void __exit exit_hello_module(void)              //__exit进行注明
+{
+        unregister_filesystem(&cstest_fs_type);
+        return ;
+} 
+MODULE_LICENSE("GPL");                             //模块许可证声明（必须要有）
+module_init(init_hello_module);                    //module_init()宏，用于初始化
+module_exit(exit_hello_module);                    //module_exit()宏，用于析构
+
+```
+
+
+
 # WSL中安装自定义Kernel
 
 ## build kernel
@@ -889,8 +1160,12 @@ make install
 if has('mouse')
         set mouse-=a
 endif
-
+set tabstop=4
+set shiftwidth=4
+set softtabstop=4
+set expandtab
 packadd! termdebug
+:syntax enable
 ```
 
 # 部署cesium项目
@@ -946,7 +1221,15 @@ sudo apt-get install make
 sudo apt-get install gcc
 ```
 
-# ls调试命令
+# ls命令
+
+## build
+
+是这个package里的的coreutils-9.7
+
+build 命令没记录 但可以参考[Linux From Scratch](https://www.linuxfromscratch.org/lfs/downloads/stable/LFS-BOOK-12.4-NOCHUNKS.html#ch-materials-packages) 这个里面
+
+## gdb
 
 基本代码都在这函数里面 
 
@@ -954,13 +1237,16 @@ print_dir（打开文件并输出）
 
 statx  获取状态的系统调用
 
-do_lstat 获取状态
+do_lstat 获取状态  对应的系统调用  [do_statx](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_statx) 
 
 ```
 cd /usr/local/bin
+file /usr/local/bin/ls
 b print_dir
 set args -l /mnt/c/Users/admin/linux/linux-6.16.3/mod/registerFileSystem/mp
 ```
+
+
 
 # VFS
 

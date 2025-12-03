@@ -237,9 +237,9 @@ struct memblock memblock __initdata_memblock = {
 
 [finish_fault](https://elixir.bootlin.com/linux/v6.16.3/C/ident/finish_fault)  这是第一个入手点
 
-[set_ptes](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_ptes)  这也是  准备设置页了都
+[set_ptes](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_ptes)  这也是  准备设置页了都 对
 
-
+[set_pte](https://elixir.bootlin.com/linux/v6.16.3/C/ident/set_pte)  核心语句  这个用来修改page表里面的entry
 
 # 存page数据的物理地址是放哪的
 

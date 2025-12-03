@@ -318,3 +318,442 @@ static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attr
      });
 }
 ```
+
+以case2为例 把其余的去掉 核心语句就是这个
+
+```
+lock cmpxchgq  %[new], %[ptr]
+```
+
+关于lock 前缀  看开发手册  LOCK—Assert LOCK# Signal Prefix
+
+就是说伴随的指令是只能被它使用
+
+```
+Causes the processor’s LOCK# signal to be asserted during execution of the accompanying instruction (turns the 
+instruction into an atomic instruction). In a multiprocessor environment, the LOCK# signal ensures that the 
+processor has exclusive use of any shared memory while the signal is asserted.
+```
+
+
+
+
+
+[queued_spin_lock_slowpath](https://elixir.bootlin.com/linux/v6.16.3/C/ident/queued_spin_lock_slowpath) 这个是真正符合我对自旋锁定义的代码 也是自旋锁的核心
+
+一些重要函数（宏展开版）
+
+```
+void __preempt_count_add(int val)
+{
+    do { 
+        const int pao_ID__ = (__builtin_constant_p(val) && ((val) == 1 || (val) == (typeof(val)) - 1)) ? (int)(val) : 0; 
+        if (0) { 
+            __typeof_unqual__((__preempt_count)) pao_tmp__; pao_tmp__ = (val); (void)pao_tmp__; 
+        } 
+        if (pao_ID__ == 1) 
+            ({ asm("inc" "l " "%" "[var]" : [var] "+m" (((__preempt_count)))); }); 
+        else if (pao_ID__ == -1) 
+            ({ asm("dec" "l " "%" "[var]" : [var] "+m" (((__preempt_count)))); }); 
+        else 
+            do { 
+                u32 pto_val__ = ((u32)(((unsigned long)val) & 0xffffffff)); 
+                if (0) {
+                    __typeof_unqual__((__preempt_count)) pto_tmp__; 
+                    pto_tmp__ = (val); 
+                    (void)pto_tmp__; 
+                } 
+                asm("add" "l " "%[val], " "%" "[var]" : [var] "+m" (((__preempt_count))) : [val] "ri" (pto_val__)); 
+            } while (0); 
+    } while (0);
+}
+static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) __attribute__((__always_inline__)) 
+bool arch_atomic_try_cmpxchg(atomic_t* v, int* old, int new)
+{
+ return (
+     { bool success; 
+__typeof__(((&v->counter))) _old = (__typeof__(((&v->counter))))(((old))); 
+__typeof__(*(((&v->counter)))) __old = *_old; 
+__typeof__(*(((&v->counter)))) __new = (((new)));
+ switch ((sizeof(*(&v->counter)))) { 
+ case 1: { 
+     volatile u8* __ptr = (volatile u8*)(((&v->counter))); 
+     asm __inline volatile(".pushsection .smp_locks,\"a\"\n" ".balign 4\n" ".long 671f - .\n" ".popsection\n" "671:" "\n\tlock " "cmpxchgb %[new], %[ptr]" "\n\t/* output condition code " "z" "*/\n" : "=@cc" "z" (success),[ptr] "+m" (*__ptr),[old] "+a" (__old) : [new] "q" (__new) : "memory"); 
+     break; 
+ } 
+ case 2: { 
+     volatile u16* __ptr = (volatile u16*)(((&v->counter))); 
+     asm __inline volatile(".pushsection .smp_locks,\"a\"\n" ".balign 4\n" ".long 671f - .\n" ".popsection\n" "671:" "\n\tlock " "cmpxchgw %[new], %[ptr]" "\n\t/* output condition code " "z" "*/\n" : "=@cc" "z" (success),[ptr] "+m" (*__ptr),[old] "+a" (__old) : [new] "r" (__new) : "memory"); 
+     break; 
+ } 
+ case 4: { 
+     volatile u32* __ptr = (volatile u32*)(((&v->counter))); 
+     asm __inline volatile(".pushsection .smp_locks,\"a\"\n" ".balign 4\n" ".long 671f - .\n" ".popsection\n" "671:" "\n\tlock " "cmpxchgl %[new], %[ptr]" "\n\t/* output condition code " "z" "*/\n" : "=@cc" "z" (success),[ptr] "+m" (*__ptr),[old] "+a" (__old) : [new] "r" (__new) : "memory"); 
+     break; 
+ } 
+ case 8: { 
+     volatile u64* __ptr = (volatile u64*)(((&v->counter))); asm __inline volatile(".pushsection .smp_locks,\"a\"\n" ".balign 4\n" ".long 671f - .\n" ".popsection\n" "671:" "\n\tlock " "cmpxchgq %[new], %[ptr]" "\n\t/* output condition code " "z" "*/\n" : "=@cc" "z" (success),[ptr] "+m" (*__ptr),[old] "+a" (__old) : [new] "r" (__new) : "memory"); 
+     break; 
+ } 
+ default:
+     __cmpxchg_wrong_size(); 
+ } 
+ if (__builtin_expect(!!(!success), 0)) *_old = __old; 
+ __builtin_expect(!!(success), 1);
+  });
+}
+
+static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) __attribute__((__always_inline__)) int arch_atomic_read(const atomic_t* v)
+{
+
+
+    return (*(const volatile typeof(_Generic(((v)->counter), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: ((v)->counter)))*)& ((v)->counter));
+}
+
+{
+    if (val & (((1U << 8) - 1) << 0))
+        ({ 
+     typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) _val; 
+    _val = ({ typeof(&lock->locked) __PTR = (&lock->locked);
+    typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) VAL; 
+    for (;;) { 
+        VAL = (
+            { 
+                do { 
+                    __attribute__((__noreturn__)) extern void __compiletime_assert_445(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); 
+                    if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) 
+                        __compiletime_assert_445(); 
+                } while (0); 
+        (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); 
+            }
+            ); 
+        if (!VAL) break; 
+        cpu_relax(); 
+    } 
+    (typeof(*&lock->locked))VAL; }); 
+    do { 
+        do {} while (0);
+        do { 
+            do {} while (0);
+            __asm__ __volatile__("": : : "memory"); 
+        } while (0); 
+    } while (0); 
+    (typeof(*&lock->locked))_val; });
+}
+
+static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) __attribute__((__always_inline__)) void clear_pending_set_locked(struct qspinlock* lock)
+{
+    do { 
+        do {
+            __attribute__((__noreturn__)) extern void __compiletime_assert_435(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); 
+            if (!((sizeof(lock->locked_pending) == sizeof(char) || sizeof(lock->locked_pending) == sizeof(short) || sizeof(lock->locked_pending) == sizeof(int) || sizeof(lock->locked_pending) == sizeof(long)) || sizeof(lock->locked_pending) == sizeof(long long))) __compiletime_assert_435(); 
+        } while (0); 
+        do { 
+            *(volatile typeof(lock->locked_pending)*)& (lock->locked_pending) = ((1U << 0)); 
+        } while (0); 
+    } while (0);
+}
+
+void __attribute__((__section__(".spinlock.text"))) queued_spin_lock_slowpath(struct qspinlock* lock, u32 val)
+{
+    struct mcs_spinlock* prev, * next, * node;
+    u32 old, tail;
+    int idx;
+
+    do { __attribute__((__noreturn__)) extern void __compiletime_assert_443(void) __attribute__((__error__("BUILD_BUG_ON failed: " "CONFIG_NR_CPUS >= (1U << _Q_TAIL_CPU_BITS)"))); if (!(!(64 >= (1U << (32 - (((0 + 8) + 8) + 2)))))) __compiletime_assert_443(); } while (0);
+
+    if (false)
+        goto pv_queue;
+
+    if (virt_spin_lock(lock))
+        return;
+
+
+
+
+
+
+
+    if (val == (1U << (0 + 8))) {
+        int cnt = (1 << 9);
+        val = ({ 
+            typeof(&(&lock->val)->counter) __PTR = (&(&lock->val)->counter); typeof(_Generic((*&(&lock->val)->counter), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&(&lock->val)->counter))) VAL;
+        for (;;) { 
+            VAL = ({ 
+                do {
+                    __attribute__((__noreturn__)) extern void __compiletime_assert_444(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); 
+                    if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_444(); 
+                } while (0); 
+            (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); 
+                }); 
+            if (((VAL != (1U << (0 + 8))) || !cnt--)) break; 
+            cpu_relax(); 
+        } 
+        (typeof(*&(&lock->val)->counter))VAL; });
+    }
+
+
+
+
+    if (val & ~(((1U << 8) - 1) << 0))
+        goto queue;
+
+
+
+
+
+
+    val = queued_fetch_set_pending_acquire(lock);
+    # 176 "kernel/locking/qspinlock.c"
+        if (__builtin_expect(!!(val & ~(((1U << 8) - 1) << 0)), 0)) {
+
+
+            if (!(val & (((1U << 8) - 1) << (0 + 8))))
+                clear_pending(lock);
+
+            goto queue;
+        }
+    # 196 "kernel/locking/qspinlock.c"
+        if (val & (((1U << 8) - 1) << 0))
+            ({ 
+            typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) _val;
+            _val = ({ typeof(&lock->locked) __PTR = (&lock->locked); 
+                      typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) VAL; 
+                      for (;;) { 
+                          VAL = ({ 
+                              do { 
+                                  __attribute__((__noreturn__)) extern void __compiletime_assert_445(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); 
+                                  if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_445(); 
+                              } while (0); 
+                          (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); 
+                              }); 
+                          if (!VAL) break;
+                          cpu_relax(); 
+                      } 
+                      (typeof(*&lock->locked))VAL; }); 
+            do { 
+                do {
+                } while (0); 
+                do { 
+                    do {
+                    } while (0); 
+                    __asm__ __volatile__("": : : "memory"); 
+                } while (0); 
+            } while (0); 
+            (typeof(*&lock->locked))_val; });
+
+
+
+
+
+
+    clear_pending_set_locked(lock);
+    ;
+    return;
+
+
+
+
+
+queue:
+    ;
+pv_queue:
+    node = ({ do { const void __seg_gs* __vpp_verify = (typeof((&qnodes[0].mcs) + 0))((void*)0); (void)__vpp_verify; } while (0); ({ unsigned long tcp_ptr__ = ({ *(typeof(this_cpu_off)*)(&(this_cpu_off)); }); tcp_ptr__ += (unsigned long)(&qnodes[0].mcs); (__typeof_unqual__(*(&qnodes[0].mcs))*)tcp_ptr__; }); });
+    idx = node->count++;
+ tail = encode_tail(({ __this_cpu_preempt_check("read"); ({ __typeof_unqual__(cpu_number) pscr_ret__; do { const void __seg_gs* __vpp_verify = (typeof((&(cpu_number)) + 0))((void*)0); (void)__vpp_verify; } while (0); switch (sizeof(cpu_number)) { case 1: pscr_ret__ = ({ *(typeof(cpu_number)*)(&(cpu_number)); }); break; case 2: pscr_ret__ = ({ *(typeof(cpu_number)*)(&(cpu_number)); }); break; case 4: pscr_ret__ = ({ *(typeof(cpu_number)*)(&(cpu_number)); }); break; case 8: pscr_ret__ = ({ *(typeof(cpu_number)*)(&(cpu_number)); }); break; default: __bad_size_call_parameter(); break; } pscr_ret__; }); }), idx);
+
+                                                                                                                                                                                                                                                             trace_contention_begin(lock, (1U << 0));
+                                                                                                                                                                                                                                                             # 230 "kernel/locking/qspinlock.c"
+                                                                                                                                                                                                                                                                 if (__builtin_expect(!!(idx >= 4), 0)) {
+                                                                                                                                                                                                                                                                     ;
+                                                                                                                                                                                                                                                                     while (!queued_spin_trylock(lock))
+                                                                                                                                                                                                                                                                         cpu_relax();
+                                                                                                                                                                                                                                                                     goto release;
+                                                                                                                                                                                                                                                                 }
+
+                                                                                                                                                                                                                                                             node = grab_mcs_node(node, idx);
+
+
+
+
+                                                                                                                                                                                                                                                             do { (void)(idx); } while (0);
+
+
+
+
+
+
+                                                                                                                                                                                                                                                             __asm__ __volatile__("": : : "memory");
+
+                                                                                                                                                                                                                                                             node->locked = 0;
+                                                                                                                                                                                                                                                             node->next = ((void*)0);
+                                                                                                                                                                                                                                                             __pv_init_node(node);
+
+
+
+
+
+
+                                                                                                                                                                                                                                                             if (queued_spin_trylock(lock))
+                                                                                                                                                                                                                                                                 goto release;
+
+
+
+
+
+
+                                                                                                                                                                                                                                                             do { do {} while (0); __asm__ __volatile__("": : : "memory"); } while (0);
+                                                                                                                                                                                                                                                             # 277 "kernel/locking/qspinlock.c"
+                                                                                                                                                                                                                                                                 old = xchg_tail(lock, tail);
+                                                                                                                                                                                                                                                             next = ((void*)0);
+
+
+
+
+
+                                                                                                                                                                                                                                                             if (old & ((((1U << 2) - 1) << ((0 + 8) + 8)) | (((1U << (32 - (((0 + 8) + 8) + 2))) - 1) << (((0 + 8) + 8) + 2)))) {
+                                                                                                                                                                                                                                                                 prev = decode_tail(old, qnodes);
+
+
+                                                                                                                                                                                                                                                                 do { do { __attribute__((__noreturn__)) extern void __compiletime_assert_446(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(prev->next) == sizeof(char) || sizeof(prev->next) == sizeof(short) || sizeof(prev->next) == sizeof(int) || sizeof(prev->next) == sizeof(long)) || sizeof(prev->next) == sizeof(long long))) __compiletime_assert_446(); } while (0); do { *(volatile typeof(prev->next)*)& (prev->next) = (node); } while (0); } while (0);
+
+                                                                                                                                                                                                                                                                 __pv_wait_node(node, prev);
+                                                                                                                                                                                                                                                                 ({ typeof(_Generic((*&node->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&node->locked))) _val; _val = ({ typeof(&node->locked) __PTR = (&node->locked); typeof(_Generic((*&node->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&node->locked))) VAL; for (;;) { VAL = ({ do { __attribute__((__noreturn__)) extern void __compiletime_assert_447(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_447(); } while (0); (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); }); if (VAL) break; cpu_relax(); } (typeof(*&node->locked))VAL; }); do { do {} while (0); do { do {} while (0); __asm__ __volatile__("": : : "memory"); } while (0); } while (0); (typeof(*&node->locked))_val; });
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                 next = ({ do { __attribute__((__noreturn__)) extern void __compiletime_assert_448(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(node->next) == sizeof(char) || sizeof(node->next) == sizeof(short) || sizeof(node->next) == sizeof(int) || sizeof(node->next) == sizeof(long)) || sizeof(node->next) == sizeof(long long))) __compiletime_assert_448(); } while (0); (*(const volatile typeof(_Generic((node->next), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (node->next)))*)& (node->next)); });
+                                                                                                                                                                                                                                                                 if (next)
+                                                                                                                                                                                                                                                                     prefetchw(next);
+                                                                                                                                                                                                                                                             }
+                                                                                                                                                                                                                                                             # 325 "kernel/locking/qspinlock.c"
+                                                                                                                                                                                                                                                                 if ((val = __pv_wait_head_or_lock(lock, node)))
+                                                                                                                                                                                                                                                                     goto locked;
+
+                                                                                                                                                                                                                                                             val = ({ typeof(_Generic((*&(&lock->val)->counter), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&(&lock->val)->counter))) _val; _val = ({ typeof(&(&lock->val)->counter) __PTR = (&(&lock->val)->counter); typeof(_Generic((*&(&lock->val)->counter), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&(&lock->val)->counter))) VAL; for (;;) { VAL = ({ do { __attribute__((__noreturn__)) extern void __compiletime_assert_449(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_449(); } while (0); (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); }); if ((!(VAL & ((((1U << 8) - 1) << 0) | (((1U << 8) - 1) << (0 + 8)))))) break; cpu_relax(); } (typeof(*&(&lock->val)->counter))VAL; }); do { do {} while (0); do { do {} while (0); __asm__ __volatile__("": : : "memory"); } while (0); } while (0); (typeof(*&(&lock->val)->counter))_val; });
+
+                                                                                                                                                                                                                                                         locked:
+                                                                                                                                                                                                                                                             # 352 "kernel/locking/qspinlock.c"
+                                                                                                                                                                                                                                                                 if ((val & ((((1U << 2) - 1) << ((0 + 8) + 8)) | (((1U << (32 - (((0 + 8) + 8) + 2))) - 1) << (((0 + 8) + 8) + 2)))) == tail) {
+                                                                                                                                                                                                                                                                     if (atomic_try_cmpxchg_relaxed(&lock->val, &val, (1U << 0)))
+                                                                                                                                                                                                                                                                         goto release;
+                                                                                                                                                                                                                                                                 }
+
+
+
+
+
+
+                                                                                                                                                                                                                                                             set_locked(lock);
+
+
+
+
+                                                                                                                                                                                                                                                             if (!next)
+                                                                                                                                                                                                                                                                 next = ({ typeof(&node->next) __PTR = (&node->next); typeof(_Generic((*&node->next), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&node->next))) VAL; for (;;) { VAL = ({ do { __attribute__((__noreturn__)) extern void __compiletime_assert_450(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_450(); } while (0); (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); }); if ((VAL)) break; cpu_relax(); } (typeof(*&node->next))VAL; });
+
+                                                                                                                                                                                                                                                             do { do {} while (0); do { do { __attribute__((__noreturn__)) extern void __compiletime_assert_451(void) __attribute__((__error__("Need native word sized stores/loads for atomicity."))); if (!((sizeof(*(&next->locked)) == sizeof(char) || sizeof(*(&next->locked)) == sizeof(short) || sizeof(*(&next->locked)) == sizeof(int) || sizeof(*(&next->locked)) == sizeof(long)))) __compiletime_assert_451(); } while (0); __asm__ __volatile__("": : : "memory"); do { do { __attribute__((__noreturn__)) extern void __compiletime_assert_452(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); if (!((sizeof(*(&next->locked)) == sizeof(char) || sizeof(*(&next->locked)) == sizeof(short) || sizeof(*(&next->locked)) == sizeof(int) || sizeof(*(&next->locked)) == sizeof(long)) || sizeof(*(&next->locked)) == sizeof(long long))) __compiletime_assert_452(); } while (0); do { *(volatile typeof(*(&next->locked))*)& (*(&next->locked)) = (1); } while (0); } while (0); } while (0); } while (0);
+                                                                                                                                                                                                                                                             __pv_kick_node(lock, next);
+
+                                                                                                                                                                                                                                                         release:
+                                                                                                                                                                                                                                                             trace_contention_end(lock, 0);
+
+
+
+
+ ({ __this_cpu_preempt_check("add"); do { do { const void __seg_gs* __vpp_verify = (typeof((&(qnodes[0].mcs.count)) + 0))((void*)0); (void)__vpp_verify; } while (0); switch (sizeof(qnodes[0].mcs.count)) { case 1: do { const int pao_ID__ = (__builtin_constant_p(-(typeof(qnodes[0].mcs.count))(1)) && ((-(typeof(qnodes[0].mcs.count))(1)) == 1 || (-(typeof(qnodes[0].mcs.count))(1)) == (typeof(-(typeof(qnodes[0].mcs.count))(1))) - 1)) ? (int)(-(typeof(qnodes[0].mcs.count))(1)) : 0; if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pao_tmp__; pao_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pao_tmp__; } if (pao_ID__ == 1) ({ asm("inc" "b " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else if (pao_ID__ == -1) ({ asm("dec" "b " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else do { u8 pto_val__ = ((u8)(((unsigned long)-(typeof(qnodes[0].mcs.count))(1)) & 0xff)); if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pto_tmp__; pto_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pto_tmp__; } asm("add" "b " "%[val], " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count))) : [val] "qi" (pto_val__)); } while (0); } while (0); break; case 2: do { const int pao_ID__ = (__builtin_constant_p(-(typeof(qnodes[0].mcs.count))(1)) && ((-(typeof(qnodes[0].mcs.count))(1)) == 1 || (-(typeof(qnodes[0].mcs.count))(1)) == (typeof(-(typeof(qnodes[0].mcs.count))(1))) - 1)) ? (int)(-(typeof(qnodes[0].mcs.count))(1)) : 0; if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pao_tmp__; pao_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pao_tmp__; } if (pao_ID__ == 1) ({ asm("inc" "w " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else if (pao_ID__ == -1) ({ asm("dec" "w " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else do { u16 pto_val__ = ((u16)(((unsigned long)-(typeof(qnodes[0].mcs.count))(1)) & 0xffff)); if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pto_tmp__; pto_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pto_tmp__; } asm("add" "w " "%[val], " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count))) : [val] "ri" (pto_val__)); } while (0); } while (0); break; case 4: do { const int pao_ID__ = (__builtin_constant_p(-(typeof(qnodes[0].mcs.count))(1)) && ((-(typeof(qnodes[0].mcs.count))(1)) == 1 || (-(typeof(qnodes[0].mcs.count))(1)) == (typeof(-(typeof(qnodes[0].mcs.count))(1))) - 1)) ? (int)(-(typeof(qnodes[0].mcs.count))(1)) : 0; if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pao_tmp__; pao_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pao_tmp__; } if (pao_ID__ == 1) ({ asm("inc" "l " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else if (pao_ID__ == -1) ({ asm("dec" "l " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else do { u32 pto_val__ = ((u32)(((unsigned long)-(typeof(qnodes[0].mcs.count))(1)) & 0xffffffff)); if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pto_tmp__; pto_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pto_tmp__; } asm("add" "l " "%[val], " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count))) : [val] "ri" (pto_val__)); } while (0); } while (0); break; case 8: do { const int pao_ID__ = (__builtin_constant_p(-(typeof(qnodes[0].mcs.count))(1)) && ((-(typeof(qnodes[0].mcs.count))(1)) == 1 || (-(typeof(qnodes[0].mcs.count))(1)) == (typeof(-(typeof(qnodes[0].mcs.count))(1))) - 1)) ? (int)(-(typeof(qnodes[0].mcs.count))(1)) : 0; if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pao_tmp__; pao_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pao_tmp__; } if (pao_ID__ == 1) ({ asm("inc" "q " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else if (pao_ID__ == -1) ({ asm("dec" "q " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count)))); }); else do { u64 pto_val__ = ((u64)(-(typeof(qnodes[0].mcs.count))(1))); if (0) { __typeof_unqual__((qnodes[0].mcs.count)) pto_tmp__; pto_tmp__ = (-(typeof(qnodes[0].mcs.count))(1)); (void)pto_tmp__; } asm("add" "q " "%[val], " "%" "[var]" : [var] "+m" (((qnodes[0].mcs.count))) : [val] "re" (pto_val__)); } while (0); } while (0); break; default: __bad_size_call_parameter(); break; } } while (0); });
+}
+extern typeof(queued_spin_lock_slowpath) queued_spin_lock_slowpath; static void* __attribute__((__used__)) __attribute__((__section__(".discard.addressable"))) __UNIQUE_ID___addressable_queued_spin_lock_slowpath453 = (void*)(uintptr_t)&queued_spin_lock_slowpath; asm(".section \".export_symbol\",\"a\" ; __export_symbol_queued_spin_lock_slowpath: ; .asciz \"\" ; .ascii \"\" \"\\0\" ; .balign 8 ; .quad queued_spin_lock_slowpath ; .previous");
+
+static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) __attribute__((__always_inline__)) 
+u32 queued_fetch_set_pending_acquire(struct qspinlock* lock)
+{
+    u32 val;
+
+
+
+
+
+
+    val = ({ 
+        bool c; 
+    asm __inline volatile (".pushsection .smp_locks,\"a\"\n" ".balign 4\n" ".long 671f - .\n" ".popsection\n" "671:" "\n\tlock " "btsl" " %[val], " "%[var]" "\n\t/* output condition code " "c" "*/\n" : [var] "+m" (lock->val.counter), "=@cc" "c" (c) : [val] "I" ((0 + 8)) : "memory"); 
+    c; 
+        })
+        * (1U << (0 + 8));
+    val |= atomic_read(&lock->val) & ~(((1U << 8) - 1) << (0 + 8));
+
+    return val;
+}
+
+static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attribute__((no_instrument_function)) bool virt_spin_lock(struct qspinlock* lock)
+{
+    int val;
+
+    if (!({ 
+        bool branch; 
+    if (__builtin_types_compatible_p(typeof(*&virt_spin_lock_key), struct static_key_true)) 
+        branch = !arch_static_branch(&(&virt_spin_lock_key)->key, true); 
+    else if (__builtin_types_compatible_p(typeof(*&virt_spin_lock_key), struct static_key_false)) 
+        branch = !arch_static_branch_jump(&(&virt_spin_lock_key)->key, true); 
+    else
+        branch = ____wrong_branch_error(); __builtin_expect(!!(branch), 1); }))
+        return false;
+
+
+
+
+
+
+
+__retry:
+    val = atomic_read(&lock->val);
+
+    if (val || !atomic_try_cmpxchg(&lock->val, &val, (1U << 0))) {
+        cpu_relax();
+        goto __retry;
+    }
+
+    return true;
+}
+```
+
+最重要的是这个宏
+
+[smp_cond_load_acquire](https://elixir.bootlin.com/linux/v6.16.3/C/ident/smp_cond_load_acquire) 
+
+smp_cond_load_acquire(&lock->locked, !VAL); 的展开如下
+
+```
+ ({ 
+ typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) _val;
+ _val = ({ typeof(&lock->locked) __PTR = (&lock->locked); 
+           typeof(_Generic((*&lock->locked), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*&lock->locked))) VAL; 
+           for (;;) { 
+               VAL = ({ 
+                   do { 
+                       __attribute__((__noreturn__)) extern void __compiletime_assert_445(void) __attribute__((__error__("Unsupported access size for {READ,WRITE}_ONCE()."))); 
+                       if (!((sizeof(*__PTR) == sizeof(char) || sizeof(*__PTR) == sizeof(short) || sizeof(*__PTR) == sizeof(int) || sizeof(*__PTR) == sizeof(long)) || sizeof(*__PTR) == sizeof(long long))) __compiletime_assert_445(); 
+                   } while (0); 
+               (*(const volatile typeof(_Generic((*__PTR), char: (char)0, unsigned char : (unsigned char)0, signed char : (signed char)0, unsigned short : (unsigned short)0, signed short : (signed short)0, unsigned int : (unsigned int)0, signed int : (signed int)0, unsigned long : (unsigned long)0, signed long : (signed long)0, unsigned long long : (unsigned long long)0, signed long long : (signed long long)0, default: (*__PTR)))*)& (*__PTR)); 
+                   }); 
+               if (!VAL) break;
+               cpu_relax(); 
+           } 
+           (typeof(*&lock->locked))VAL; }); 
+ do { 
+     do {
+     } while (0); 
+     do { 
+         do {
+         } while (0); 
+         __asm__ __volatile__("": : : "memory"); 
+     } while (0); 
+ } while (0); 
+ (typeof(*&lock->locked))_val; });
+```
+
