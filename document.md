@@ -447,149 +447,210 @@ module_exit(exit_hello_module);                    //module_exit()宏，用于�
 #include <linux/module.h>
 #include <linux/serdev.h>
 #include <linux/fs_context.h>
+#include <linux/user_namespace.h>
+#include <linux/string.h>
 static struct kmem_cache *proc_inode_cachep __ro_after_init;
+static char* dataBuf;
+static int datasize = 0;
+static void init_once(void *foo)
+{
+	struct inode *ei = (struct inode *) foo;
+
+	inode_init_once(ei);
+}
+static void proc_init_kmemcache(void)
+{
+	proc_inode_cachep = kmem_cache_create("proc_inode_cache",
+					     sizeof(struct inode),
+					     0, (SLAB_RECLAIM_ACCOUNT|
+						SLAB_ACCOUNT|
+						SLAB_PANIC),
+					     init_once);
+	dataBuf = kmalloc(100, GFP_KERNEL);
+}
 static struct inode *proc_alloc_inode(struct super_block *sb)
 {
-    struct inode *vfs_inode;
-    vfs_inode = alloc_inode_sb(sb, proc_inode_cachep, GFP_KERNEL);
-    if (!vfs_inode)
-        return NULL;
-    return vfs_inode;
+	struct inode *vfs_inode;
+	vfs_inode = alloc_inode_sb(sb, proc_inode_cachep, GFP_KERNEL);
+	if (!vfs_inode)
+		return NULL;
+	return vfs_inode;
 }
 static void proc_free_inode(struct inode *inode)
 {
-    kmem_cache_free(proc_inode_cachep,inode);
+	kmem_cache_free(proc_inode_cachep,inode);
 }
 static void proc_evict_inode(struct inode *inode)
 {
-    truncate_inode_pages_final(&inode->i_data);
-    clear_inode(inode);
+	truncate_inode_pages_final(&inode->i_data);
+	clear_inode(inode);
 }
 static int proc_show_options(struct seq_file *seq, struct dentry *root)
 {
-    return 0;
+	return 0;
 }
 const struct super_operations proc_sops = {
-    .alloc_inode    = proc_alloc_inode,
-    .free_inode    = proc_free_inode,
-    .drop_inode    = generic_delete_inode,
-    .evict_inode    = proc_evict_inode,
-    .statfs        = simple_statfs,
-    .show_options    = proc_show_options,
+	.alloc_inode	= proc_alloc_inode,
+	.free_inode	= proc_free_inode,
+	.drop_inode	= generic_delete_inode,
+	.evict_inode	= proc_evict_inode,
+	.statfs		= simple_statfs,
+	.show_options	= proc_show_options,
 };
 static void proc_kill_sb(struct super_block *sb)
 {
-    kill_anon_super(sb);
-    return;
+	kill_anon_super(sb);
+	return;
 }
 static void proc_fs_context_free(struct fs_context *fc)
 {
-    void *ctx = fc->fs_private;
-    printk("ctx address  %p\n",ctx);
-    return;
+	void *ctx = fc->fs_private;
+	printk("ctx address  %p\n",ctx);
+	return;
 }
 static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
 {
-    return 0;
+	return 0;
 }
 
 
 static int proc_reconfigure(struct fs_context *fc){
-    struct super_block *sb = fc->root->d_sb;
-    sync_filesystem(sb);
-    return 0;
-}
-static struct dentry *proc_root_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
-{
-        return NULL;
+	struct super_block *sb = fc->root->d_sb;
+	sync_filesystem(sb);
+	return 0;
 }
 static int proc_root_getattr(struct mnt_idmap *idmap,
-                 const struct path *path, struct kstat *stat,
-                 u32 request_mask, unsigned int query_flags)
+			     const struct path *path, struct kstat *stat,
+			     u32 request_mask, unsigned int query_flags)
 {
-    generic_fillattr(&nop_mnt_idmap, request_mask, d_inode(path->dentry),
-             stat);
-    return 0;
+	generic_fillattr(&nop_mnt_idmap, request_mask, d_inode(path->dentry),
+			 stat);
+	return 0;
 }
 static int proc_pid_readdir(struct file *file, struct dir_context *ctx)
 {
-    char a='a';
-    for(int i=1;i<5;i++){
-        a++;
-        dir_emit(ctx,&a,1,i,S_IFDIR | S_IRUGO | S_IXUGO);
-    }
-    return 0;
+	if(ctx->pos==789){
+		return 0;
+	}
+	char a='a';
+	for(int i=1;i<5;i++){
+		a++;
+		dir_emit(ctx,&a,1,i,S_IFDIR);
+	}
+	ctx->pos=789;
+	return 0;
 }
-static int proc_root_readdir(struct file *file, struct dir_context *ctx)
+
+static ssize_t cstestWrite (struct file* file, const char __user* ubuf, size_t size, loff_t* p) {
+	datasize = size;
+	char* buf = memdup_user_nul(ubuf, size);
+	memcpy(dataBuf, buf, size);
+	return size;
+}
+static ssize_t cstestRead(struct file* filp, char __user* buf, size_t siz, loff_t* ppos)
 {
-    return proc_pid_readdir(file, ctx);
+	int pos = *ppos;
+	if (pos == datasize) {
+		return 0;
+	}
+	int ret=copy_to_user(buf, dataBuf, datasize);
+	if (ret) {
+		return ret;
+	}
+	buf[datasize] = '\n';
+	*ppos = datasize;
+	return datasize;
 }
 static const struct file_operations proc_root_operations = {
-    .read         = generic_read_dir,
-    .iterate_shared     = proc_root_readdir,
-    .llseek        = generic_file_llseek,
+	.read		= cstestRead,
+	.write		= cstestWrite,
+	.iterate_shared	 = proc_pid_readdir,
+	.llseek		= generic_file_llseek,
 };
-
+static int inodenum=1;
+static struct dentry *proc_root_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
+{
+        
+        struct inode *inode = new_inode(dir->i_sb);
+        inode->i_private = 0;
+        inode->i_ino = inodenum;
+        inodenum++;
+        simple_inode_init_ts(inode);
+        char name=*(dentry->d_name.name);
+        if((name-'a')%2==0){
+            inode->i_mode = S_IRUGO|S_IFREG;
+        }else{
+            inode->i_mode = S_IWUGO|S_IFDIR;
+        }
+        inode->i_uid = GLOBAL_ROOT_UID;;
+        inode->i_gid = GLOBAL_ROOT_GID;
+        //inode->i_mtime.tv_sec=365;
+        inode->i_mtime_sec=365;
+	inode->i_fop = &proc_root_operations;
+        return d_splice_alias(inode, dentry);
+    
+    return NULL;
+}
 /*
  * proc root can do almost nothing..
  */
 static const struct inode_operations proc_root_inode_operations = {
-    .lookup        = proc_root_lookup,
-    .getattr    = proc_root_getattr,
+	.lookup		= proc_root_lookup,
+	.getattr	= proc_root_getattr,
 };
-
 static struct inode *proc_get_inode(struct super_block *sb)
 {
-    struct inode *inode = new_inode(sb);
+	struct inode *inode = new_inode(sb);
 
-    if (!inode) {
-        return NULL;
-    }
+	if (!inode) {
+		return NULL;
+	}
 
-    inode->i_private = 0;
-    inode->i_ino = 1;
-    simple_inode_init_ts(inode);
+	inode->i_private = 0;
+	inode->i_ino = inodenum;
+    inodenum++;
+	simple_inode_init_ts(inode);
 
-    inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
-    inode->i_uid = GLOBAL_ROOT_UID;;
-    inode->i_gid = GLOBAL_ROOT_GID;
+	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO;
+	inode->i_uid = GLOBAL_ROOT_UID;;
+	inode->i_gid = GLOBAL_ROOT_GID;
+	
 
+	if (S_ISREG(inode->i_mode)) {
 
-    if (S_ISREG(inode->i_mode)) {
-
-    } else if (S_ISDIR(inode->i_mode)) {
-        inode->i_op = &proc_root_inode_operations;
-        inode->i_fop = &proc_root_operations;
-    } else if (S_ISLNK(inode->i_mode)) {
-
-    } else {
-        BUG();
-    }
-    return inode;
+	} else if (S_ISDIR(inode->i_mode)) {
+		inode->i_op = &proc_root_inode_operations;
+		inode->i_fop = &proc_root_operations;
+	} else if (S_ISLNK(inode->i_mode)) {
+		
+	} else {
+		BUG();
+	}
+	return inode;
 }
 static int proc_fill_super(struct super_block *s, struct fs_context *fc)
 {
 
-    /* User space would break if executables or devices appear on proc */
-    s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
-    s->s_flags |= SB_NODIRATIME | SB_NOSUID | SB_NOEXEC;
-    s->s_blocksize = 1024;
-    s->s_blocksize_bits = 10;
-    s->s_magic = 1512421;
-    s->s_op = &proc_sops;
-    s->s_time_gran = 1;
-    s->s_fs_info =0;
-    s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
-    struct inode *root_inode;
-    /* procfs dentries and inodes don't require IO to create */
-    s->s_shrink->seeks = 0;
-    root_inode=proc_get_inode(s);
-    s->s_root = d_make_root(root_inode);
-    return 0;
+	/* User space would break if executables or devices appear on proc */
+	s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
+	s->s_flags |= SB_NODIRATIME | SB_NOSUID | SB_NOEXEC;
+	s->s_blocksize = 1024;
+	s->s_blocksize_bits = 10;
+	s->s_magic = 1512421;
+	s->s_op = &proc_sops;
+	s->s_time_gran = 1;
+	s->s_fs_info =0;
+	s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
+	struct inode *root_inode;
+	/* procfs dentries and inodes don't require IO to create */
+	s->s_shrink->seeks = 0;
+	root_inode=proc_get_inode(s);
+	s->s_root = d_make_root(root_inode);
+	return 0;
 }
 static int proc_get_tree(struct fs_context *fc)
 {
-    return get_tree_nodev(fc, proc_fill_super);
+	return get_tree_nodev(fc, proc_fill_super);
 }
 static const struct fs_context_operations proc_fs_context_ops = {
         .free           = proc_fs_context_free,
@@ -607,16 +668,16 @@ static int proc_init_fs_context(struct fs_context *fc)
         fc->ops = &proc_fs_context_ops;
         return 0;
 }
-
 struct file_system_type cstest_fs_type = {
         .name = "cstest",
         .fs_flags               = FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
         .init_fs_context        = proc_init_fs_context,
-    .kill_sb        = proc_kill_sb,
-    .fs_flags        = FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
+	.kill_sb		= proc_kill_sb,
+	.fs_flags		= FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
 };
 static int __init init_hello_module(void)                //__init进行注明
 {
+	proc_init_kmemcache();
         register_filesystem(&cstest_fs_type);
         return 0;
 }
@@ -628,6 +689,7 @@ static void __exit exit_hello_module(void)              //__exit进行注明
 MODULE_LICENSE("GPL");                             //模块许可证声明（必须要有）
 module_init(init_hello_module);                    //module_init()宏，用于初始化
 module_exit(exit_hello_module);                    //module_exit()宏，用于析构
+
 ```
 
 WSL版本  这个比上面新  明天验证一下
@@ -759,14 +821,18 @@ static const struct file_operations proc_root_operations = {
 static int inodenum=1;
 static struct dentry *proc_root_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
 {
-
+        
         struct inode *inode = new_inode(dir->i_sb);
         inode->i_private = 0;
         inode->i_ino = inodenum;
         inodenum++;
         simple_inode_init_ts(inode);
-
-        inode->i_mode = S_IRUGO;
+        char name=*(dentry->d_name.name);
+        if((name-'a')%2==0){
+            inode->i_mode = S_IRUGO|S_IFREG;
+        }else{
+            inode->i_mode = S_IWUGO|S_IFDIR;
+        }
         inode->i_uid = GLOBAL_ROOT_UID;;
         inode->i_gid = GLOBAL_ROOT_GID;
         inode->i_mtime.tv_sec=365;
@@ -1233,6 +1299,10 @@ build 命令没记录 但可以参考[Linux From Scratch](https://www.linuxfroms
 
 基本代码都在这函数里面 
 
+filemodestring  应该判断文件权限和类型的
+
+print_current_files  输出获取的文件状态  基本从这就能反推inode各个字段是干啥的了
+
 print_dir（打开文件并输出）
 
 statx  获取状态的系统调用
@@ -1243,6 +1313,7 @@ do_lstat 获取状态  对应的系统调用  [do_statx](https://elixir.bootlin.
 cd /usr/local/bin
 file /usr/local/bin/ls
 b print_dir
+b print_current_files
 set args -l /mnt/c/Users/admin/linux/linux-6.16.3/mod/registerFileSystem/mp
 ```
 
@@ -1257,6 +1328,28 @@ unlink中解锁了
 inode是谁提供的？
 
 super_block  参考proc_get_inode
+
+
+
+lookup 这接口是获取dentry的信息的  这个函数很有用  因为什么操作都会涉及到查  这个就是查的接口
+
+第一个参数是父目录的dentry  第二个是要查的子文件的dentry  返回值没啥用 大部分情况为空
+
+```
+struct inode_operations {
+	struct dentry * (*lookup) (struct inode *,struct dentry *, unsigned int);
+	}
+```
+
+获取这个目录下的的文件列表
+
+```
+struct file_operations {
+	int (*iterate_shared) (struct file *, struct dir_context *);
+}
+```
+
+
 
 # WRITE_ONCE 和READ_ONCE
 
