@@ -249,11 +249,31 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -cdrom debian-13.1.0-amd64-netin
 qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=debian.img,if=virtio -net nic,model=virtio -net user -vga std
 ```
 
+# wsl中qemu安装debian（使用NVME硬盘）
+
+```
+dd if=/dev/zero of=nvme.img bs=1M count=20000
+
+qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -cdrom debian-13.1.0-amd64-netinst.iso -drive file=/mnt/c/Users/admin/linux/nvme.img,if=none,id=nvme0n1,format=raw -device nvme,drive=nvme0n1,serial=1234 -net nic,model=virtio -net user -vga std
+
+qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=/mnt/c/Users/admin/linux/nvme.img,if=none,id=nvme0n1,format=raw -device nvme,drive=nvme0n1,serial=1234
+```
+
+
+
 # qemu中使用自己的镜像启动debian
 
 ```
 qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage -hda /mnt/c/Users/admin/linux/debian.img -append "root=/dev/sda1 rw" -s -S
 ```
+
+
+
+# qemu中使用自己的镜像启动debian（nvme硬盘）
+
+
+
+
 
 # qemu共享文件
 
@@ -1440,3 +1460,33 @@ topo_get_cpunr
 [acpi_tb_resize_root_table_list](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_tb_resize_root_table_list)
 
 [acpi_allocate_root_table](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_allocate_root_table)
+
+
+
+# grub手动添加内核
+
+
+
+```
+# 创建自定义脚本（40_ 前缀确保顺序）
+sudo nano /etc/grub.d/40_custom
+
+# 示例内容
+#!/bin/sh
+exec tail -n +3 $0
+
+menuentry 'Custom Linux Kernel 5.15.0' {
+    set root='hd0,msdos1'
+    linux /boot/vmlinuz-custom root=/dev/sda1 ro
+    initrd /boot/initrd-custom.img
+}
+
+```
+
+写完然后执行两个命令
+
+```
+update-grub
+grub-mkconfig -o /boot/grub/grub.cfg
+```
+
