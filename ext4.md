@@ -119,3 +119,45 @@ disk->fops = &sr_bdops;
 [blk_mq_dispatch_rq_list](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_dispatch_rq_list) 看样子像执行的函数
 
 [scsi_commit_rqs](https://elixir.bootlin.com/linux/v6.16.3/C/ident/scsi_commit_rqs)  这个应该更像
+
+[scsi_ioctl_sg_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/scsi_ioctl_sg_io) 
+
+[blk_execute_rq](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_execute_rq) 
+
+[sg_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/sg_io) 
+
+ [blk_mq_rq_to_pdu](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_rq_to_pdu) 这个很有意思啊 莫非request后面跟着个[scsi_cmnd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/scsi_cmnd)
+
+[blk_mq_rq_ctx_init](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_rq_ctx_init) 这里给mq_hctx成员赋值
+
+[__blk_mq_alloc_requests](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__blk_mq_alloc_requests) 
+
+
+
+[blk_mq_next_ctx](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_next_ctx) 
+
+[INIT_DELAYED_WORK](https://elixir.bootlin.com/linux/v6.16.3/C/ident/INIT_DELAYED_WORK)(&[hctx](https://elixir.bootlin.com/linux/v6.16.3/C/ident/hctx)->[run_work](https://elixir.bootlin.com/linux/v6.16.3/C/ident/run_work), [blk_mq_run_work_fn](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_run_work_fn));
+
+ [blk_mq_run_work_fn](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_run_work_fn) 
+
+[__blk_mq_do_dispatch_sched](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__blk_mq_do_dispatch_sched) 
+
+[__blk_mq_sched_dispatch_requests](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__blk_mq_sched_dispatch_requests)  这个是执行函数
+
+[kblockd_workqueue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/kblockd_workqueue)  应该是个关键的变量
+
+ [mod_delayed_work_on](https://elixir.bootlin.com/linux/v6.16.3/C/ident/mod_delayed_work_on) 
+
+[blk_mq_delay_run_hw_queue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/blk_mq_delay_run_hw_queue) 
+
+
+
+ [sd_getgeo](https://elixir.bootlin.com/linux/v6.16.3/C/ident/sd_getgeo) 
+
+[sd_ioctl](https://elixir.bootlin.com/linux/v6.16.3/C/ident/sd_ioctl)
+
+worker_thread
+
+
+
+[ata_scsi_queuecmd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_scsi_queuecmd)

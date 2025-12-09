@@ -264,7 +264,7 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=/mnt/c/Users/admin/l
 # qemu中使用自己的镜像启动debian
 
 ```
-qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage -hda /mnt/c/Users/admin/linux/debian.img -append "root=/dev/sda1 rw" -s -S
+qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/Users/admin/linux/nvme.img -append "root=/dev/sda1 rw" -s -S
 ```
 
 
