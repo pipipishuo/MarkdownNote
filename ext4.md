@@ -6,7 +6,11 @@
 
 [ext4_file_read_iter](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_file_read_iter) 读的
 
+ [do_writepages](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_writepages)  目前看到这儿		2025.12.10 20:00
 
+
+
+[filemap_get_read_batch](https://elixir.bootlin.com/linux/v6.16.3/C/ident/filemap_get_read_batch)  这个基本阐述了从内存中读取的理念  		2025.12.10 20:24
 
 AI告诉的
 

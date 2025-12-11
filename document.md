@@ -249,6 +249,10 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -cdrom debian-13.1.0-amd64-netin
 qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=debian.img,if=virtio -net nic,model=virtio -net user -vga std
 ```
 
+安装软件时记得选中国镜像第二个
+
+记得安装gdb引导
+
 # wsl中qemu安装debian（使用NVME硬盘）
 
 ```
