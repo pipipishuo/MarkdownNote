@@ -165,3 +165,17 @@ worker_thread
 
 
 [ata_scsi_queuecmd](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_scsi_queuecmd)
+
+[ata_qc_issue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_qc_issue) 
+
+scsi_queue_rq 这是一个对外接口
+
+
+
+ [ata_bmdma_qc_issue](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_bmdma_qc_issue)  艹TMD终于找到了 这才是
+
+ [ata_sff_tf_load](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_sff_tf_load)  
+
+[iowrite8](https://elixir.bootlin.com/linux/v6.16.3/C/ident/iowrite8) 最最最最最最底层函数
+
+[ata_sff_data_xfer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_sff_data_xfer) 
