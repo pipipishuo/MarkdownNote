@@ -14,6 +14,33 @@
 
 [ext4_find_extent](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_find_extent)  ext4的数据结构								2025.12.12 11：02
 
+ [ext4_ext_try_to_merge](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_ext_try_to_merge)  									2025.12.12.19：33
+
+[convert_initialized_extent](https://elixir.bootlin.com/linux/v6.16.3/C/ident/convert_initialized_extent)  这个也是在ext4_ext_map_blocks中的 2025.12.12.19：33
+
+对应的mkdir调用栈
+
+```
+#0  ext4_find_extent (inode=inode@entry=0xffff888000855268, block=0, path=path@entry=0x0, flags=flags@entry=0)
+    at fs/ext4/extents.c:889
+#1  0xffffffff815f40d5 in ext4_ext_map_blocks (handle=handle@entry=0x0, inode=inode@entry=0xffff888000855268,
+    map=map@entry=0xffffc9000043bd70, flags=flags@entry=0) at fs/ext4/extents.c:4208
+#2  0xffffffff816087c6 in ext4_map_query_blocks (handle=handle@entry=0x0, inode=inode@entry=0xffff888000855268,
+    map=map@entry=0xffffc9000043bd70, flags=flags@entry=0) at fs/ext4/inode.c:550
+#3  0xffffffff8160b223 in ext4_map_blocks (handle=handle@entry=0x0, inode=inode@entry=0xffff888000855268,
+    map=map@entry=0xffffc9000043bd70, flags=flags@entry=0) at fs/ext4/inode.c:775
+#4  0xffffffff8162624c in ext4_append (handle=handle@entry=0xffff888003ce4188, inode=inode@entry=0xffff888000855268,
+    block=block@entry=0xffffc9000043bdc4) at fs/ext4/namei.c:75
+#5  0xffffffff8162c5ef in ext4_init_new_dir (handle=handle@entry=0xffff888003ce4188, dir=dir@entry=0xffff888003ee4590,
+    inode=inode@entry=0xffff888000855268) at fs/ext4/namei.c:2969
+#6  0xffffffff8162c797 in ext4_mkdir (idmap=0xffffffff82b7cfc0 <nop_mnt_idmap>, dir=0xffff888003ee4590,
+    dentry=0xffff888003cf2a80, mode=<optimized out>) at fs/ext4/namei.c:3015
+#7  0xffffffff81533ed0 in vfs_mkdir (idmap=0xffffffff82b7cfc0 <nop_mnt_idmap>, dir=0xffff888003ee4590,
+    dentry=0xffff888003cf2a80, mode=<optimized out>) at fs/namei.c:4375
+#8  0xffffffff815395de in do_mkdirat (dfd=dfd@entry=-100, name=0xffff888000bd3000, mode=mode@entry=511)
+    at fs/namei.c:4408
+```
+
 AI告诉的
 
 generic_file_read_iter
@@ -181,3 +208,27 @@ scsi_queue_rq 这是一个对外接口
 [iowrite8](https://elixir.bootlin.com/linux/v6.16.3/C/ident/iowrite8) 最最最最最最底层函数
 
 [ata_sff_data_xfer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ata_sff_data_xfer) 
+
+
+
+
+
+# 日志
+
+[__jbd2_journal_file_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__jbd2_journal_file_buffer) 
+
+[do_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_get_write_access)
+
+[jbd2_journal_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_get_write_access)
+
+ [__ext4_journal_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_journal_get_write_access)
+
+[ext4_journal_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_journal_get_write_access)
+
+[ext4_ext_get_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_ext_get_access)
+
+[convert_initialized_extent](https://elixir.bootlin.com/linux/v6.16.3/C/ident/convert_initialized_extent)
+
+ext4_ext_map_blocks
+
+底下就是mkdir的了

@@ -293,6 +293,8 @@ qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/b
 sudo mount -t 9p -o trans=virtio,version=9p2000.L host0 /mnt/share
 ```
 
+注意  宿主机与虚拟机用户名得一致  要不然报操作不被允许  真离谱
+
 # qemu单独启动debian
 
 qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=debian.img,if=virtio -net nic,model=virtio -net user -vga std
@@ -1494,3 +1496,10 @@ update-grub
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
+
+
+# 退出网络共享账号
+
+控制面板\用户帐户\凭据管理器
+
+windows凭据  删除windows凭据
