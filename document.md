@@ -271,6 +271,13 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=/mnt/c/Users/admin/l
 qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/Users/admin/linux/nvme.img -append "root=/dev/sda1 rw" -s -S
 ```
 
+自己电脑的
+
+```
+qemu-system-x86_64 -kernel /mnt/c/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/
+linux/debian.img -append "root=/dev/sda1 rw" -s -S
+```
+
 
 
 # qemu中使用自己的镜像启动debian（nvme硬盘）
@@ -298,6 +305,12 @@ sudo mount -t 9p -o trans=virtio,version=9p2000.L host0 /mnt/share
 # qemu单独启动debian
 
 qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=debian.img,if=virtio -net nic,model=virtio -net user -vga std
+
+
+
+自己电脑的
+
+qemu-system-x86_64  -m 4096 -smp cores=8  -hda /mnt/c/linux/debian.img
 
 # proc文件系统调试函数
 
@@ -1506,8 +1519,15 @@ windows凭据  删除windows凭据
 
 
 
+
 # QTCreator设置用系统编辑器打开MD文件
 
 ```
 工具(Tools) → 选项(Options) → 环境(Environment) → MIME 类型(MIME Types)
 ```
+
+# ACPI
+
+[acpi_tb_parse_root_table](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_tb_parse_root_table) 
+
+[21. ACPI Data Tables and Table Definition Language — ACPI Specification 6.4 documentation](https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/21_ACPI_Data_Tables_and_Table_Def_Language/ACPI_Data_Tables.html) 

@@ -86,4 +86,8 @@ using the physical address defined as follows:
 — Bits 2:0 are all 0.
 ```
 
-ps flag是第一个bit值  如果这个为1 那就是2M 分页
+ps flag是第7个bit值  如果这个为1 那就是2M 分页  
+
+注意！ ps flag 是第7个  噢噢噢噢  这样就对上了
+
+第一个是P flag 不是PS flag
