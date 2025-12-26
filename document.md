@@ -1503,3 +1503,11 @@ grub-mkconfig -o /boot/grub/grub.cfg
 控制面板\用户帐户\凭据管理器
 
 windows凭据  删除windows凭据
+
+
+
+# QTCreator设置用系统编辑器打开MD文件
+
+```
+工具(Tools) → 选项(Options) → 环境(Environment) → MIME 类型(MIME Types)
+```
