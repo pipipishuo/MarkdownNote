@@ -26,3 +26,9 @@ video_thread
 upload_texture这个应该是显示了  但没啥意义  sdl本身就能显示yuv图像
 ```
 
+
+
+```
+rtsp://admin:1a2s3d4f5g@192.168.8.64:554/ -rtsp_transport tcp -fflags nobuffer -flags low_delay -analyzeduration 1000000 -max_delay 500000 -reorder_queue_size 4 -infbuf
+```
+

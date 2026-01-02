@@ -1526,8 +1526,42 @@ windows凭据  删除windows凭据
 工具(Tools) → 选项(Options) → 环境(Environment) → MIME 类型(MIME Types)
 ```
 
+
+
+# 无意间发现的神网址
+
+[Fabrice Bellard's Home Page](https://bellard.org/)
+
 # ACPI
 
 [acpi_tb_parse_root_table](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_tb_parse_root_table) 
 
 [21. ACPI Data Tables and Table Definition Language — ACPI Specification 6.4 documentation](https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/21_ACPI_Data_Tables_and_Table_Def_Language/ACPI_Data_Tables.html) 
+
+
+
+ [pci_mcfg_parse](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pci_mcfg_parse)	很重要的东西  这个就是我找的  如何从acpi中找到pci的配置空间
+
+
+
+[actbl2.h - include/acpi/actbl2.h - Linux source code v6.16.3 - Bootlin Elixir Cross Referencer](https://elixir.bootlin.com/linux/v6.16.3/source/include/acpi/actbl2.h#L37)  比较重要的一个文件  好多符号的宏定义都在这 以此类推actblX.h的这几个表都挺有用
+
+ [ACPI_SIG_FADT](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ACPI_SIG_FADT) 
+
+
+
+ [acpi_db_set_method_data](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_db_set_method_data)  能够一窥object  和method的函数
+
+
+
+[acpi_db_disassemble_method](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_db_disassemble_method) 反汇编的
+
+
+
+[acpi_ns_lookup](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ns_lookup)  查看找node的 这个肯定很重要
+
+确定了一点就是AML是由操作系统执行的！！！但代码来源是固件开发者！！！牛逼！这不是虚拟机那一套吗哈哈可以，这种理念头一次被这么用哈哈  没啥毛病
+
+
+
+[acpi_ps_execute_method](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_execute_method)  看这个函数中的 [acpi_ps_parse_aml](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_parse_aml) 函数  为啥叫“parse" 虚拟机！

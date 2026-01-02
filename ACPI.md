@@ -216,3 +216,24 @@ AML code cannot access the general-purpose event registers.
 按字节访问而不是整个长度  有意思
 
 OSPM accesses GPE registers through byte accesses (regardless of their length).
+
+
+
+# 5. ACPI Software Programming Model
+
+## 5.1. Overview of the System Description Table Architecture
+
+这句话很精辟，一句话就把Definition Block，data object，ACPI namespace的关系说清楚了
+
+就是说 Definition Block是以data object的形式按层级结构放在ACPI namespace中的
+
+A Definition Block contains information about the platform’s hardware implementation details in the form of data objects arranged in a hierarchical (tree-structured) entity known as the “ACPI namespace”, which represents the platform’s hardware configuration. 
+
+看到没Data object是被用AML编码的
+
+Data objects are encoded in a format known as ACPI Machine Language or AML for short. Data objects encoded in AML are “evaluated” by an OSPM entity known as the AML interpreter.
+
+## 5.5. Control Methods and the ACPI Source Language (ASL)
+
+OEMs and platform firmware vendors write definition blocks using the ACPI Source Language (ASL) and use a translator to produce the byte stream encoding described in [Definition Block Encoding](https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/05_ACPI_Software_Programming_Model/ACPI_Software_Programming_Model.html#definition-block-encoding) .
+
