@@ -271,6 +271,13 @@ qemu-system-x86_64 -m 2048 -smp cores=2 -boot d -drive file=/mnt/c/Users/admin/l
 qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/Users/admin/linux/nvme.img -append "root=/dev/sda1 rw" -s -S
 ```
 
+公司笔记本
+
+```
+qemu-system-x86_64 -kernel /mnt/c/Users/LANX/linux/linux-6.16.3/arch/x86/boot/b
+zImage  -hda /mnt/c/Users/LANX/linux/debian.img -append "root=/dev/sda1 rw" -s -S
+```
+
 自己电脑的
 
 ```
