@@ -215,6 +215,16 @@ scsi_queue_rq 这是一个对外接口
 
 # 日志
 
+[jbd2_journal_commit_transaction](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_commit_transaction) 总体函数
+
+
+
+[jbd2_journal_write_revoke_records](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_write_revoke_records) 当前看的函数
+
+[jbd2_journal_write_metadata_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_write_metadata_buffer) 
+
+[jbd2_journal_commit_transaction](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_commit_transaction)
+
 [__jbd2_journal_file_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__jbd2_journal_file_buffer) 
 
 [do_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_get_write_access)
@@ -232,3 +242,44 @@ scsi_queue_rq 这是一个对外接口
 ext4_ext_map_blocks
 
 底下就是mkdir的了
+
+# jdb2
+
+这段代码能够解决jbd2_journal_commit_transaction中的`while (commit_transaction->t_buffers)` 哪来的问题
+
+```
+void __jbd2_journal_file_buffer(struct journal_head *jh,
+			transaction_t *transaction, int jlist){
+			......
+	case BJ_Metadata:
+		transaction->t_nr_buffers++;
+		list = &transaction->t_buffers;		
+		.......
+			}
+
+```
+
+
+
+0xffff888004378800
+
+[jbd2_journal_start_thread](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_start_thread) 这个解释了 journal ext4 的关系
+
+一个super对应一个日志系统  但日志系统有自己的线程  独立去做提交和处理事务  这就合理了 爽
+
+# ext4
+
+[__ext4_get_inode_loc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_get_inode_loc)  这个函数非常好  解答了ext4文件系统的数据结构比如  哪个东西放哪里
+
+
+
+#0  ext4_fill_raw_inode (inode=inode@entry=0xffff888003e7abe0, raw_inode=raw_inode@entry=0xffff888007f90900)
+    at fs/ext4/inode.c:4744
+#1  0xffffffff8160f211 in ext4_do_update_inode (iloc=0xffffc90000333bf0, handle=0xffff888003ce7000,
+    inode=0xffff888003e7abe0) at fs/ext4/inode.c:5657
+#2  ext4_mark_iloc_dirty (handle=handle@entry=0xffff888003ce7000, inode=inode@entry=0xffff888003e7abe0,
+    iloc=iloc@entry=0xffffc90000333bf0) at fs/ext4/inode.c:6310
+#3  0xffffffff8160fb6d in __ext4_mark_inode_dirty (handle=handle@entry=0xffff888003ce7000,
+    inode=inode@entry=0xffff888003e7abe0, func=func@entry=0xffffffff82231be0 <__func__.2> "ext4_dirty_inode",
+    line=line@entry=6545) at fs/ext4/inode.c:6516
+#4  0xffffffff81613e46 in ext4_dirty_inode (inode=0xffff888003e7abe0, flags=<optimized out>) at fs/ext4/inode.c:6545

@@ -4,6 +4,8 @@
 
 # spin_lock
 
+## spin_lock
+
 参考链接 [spinlock.h - include/linux/spinlock.h - Linux source code v6.16.3 - Bootlin Elixir Cross Referencer](https://elixir.bootlin.com/linux/v6.16.3/source/include/linux/spinlock.h#L349)
 
 ```
@@ -17,13 +19,13 @@ static __always_inline void spin_lock(spinlock_t *lock)
 
 就是一个封装
 
-# _raw_spin_lock
+## _raw_spin_lock
 
 这个就分为两个路子了一个up的 一个smp的
 
 先看up的
 
-# up版
+## up版
 
 话说up指什么？参考链接[Linux中的SMP与UP_smp和up-CSDN博客](https://blog.csdn.net/Erice_s/article/details/118284087)  说白了就是一个cpu 也就是单核 哦哦 那就对了 这也就是底下只需要阻止抢断就行了
 
@@ -223,7 +225,7 @@ static inline __attribute__((__gnu_inline__)) __attribute__((__unused__)) __attr
 
 参考这个链接[c - Working of __asm__ __volatile__ ("" : : : "memory") - Stack Overflow](https://stackoverflow.com/questions/14950614/working-of-asm-volatile-memory)
 
-# smp版
+## smp版
 
 ```
 __attribute__((__noinline__)) void __attribute__((__section__(".spinlock.text"))) _raw_spin_lock(raw_spinlock_t *lock)
@@ -757,3 +759,10 @@ smp_cond_load_acquire(&lock->locked, !VAL); 的展开如下
  (typeof(*&lock->locked))_val; });
 ```
 
+
+
+# mutex
+
+ [__rt_mutex_lock](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__rt_mutex_lock)  这个解释了信号量的一些东西 
+
+死锁检测机制在哪呢？或者说被这个机制规避了？ 不用额外写一些代码了？
