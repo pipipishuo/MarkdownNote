@@ -267,6 +267,8 @@ void __jbd2_journal_file_buffer(struct journal_head *jh,
 
 一个super对应一个日志系统  但日志系统有自己的线程  独立去做提交和处理事务  这就合理了 爽
 
+[jbd2_journal_dirty_metadata](https://elixir.bootlin.com/linux/v6.16.3/C/ident/jbd2_journal_dirty_metadata) 算是ext4与jbd2的一个接口
+
 # ext4
 
 [__ext4_get_inode_loc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_get_inode_loc)  这个函数非常好  解答了ext4文件系统的数据结构比如  哪个东西放哪里
@@ -283,3 +285,51 @@ void __jbd2_journal_file_buffer(struct journal_head *jh,
     inode=inode@entry=0xffff888003e7abe0, func=func@entry=0xffffffff82231be0 <__func__.2> "ext4_dirty_inode",
     line=line@entry=6545) at fs/ext4/inode.c:6516
 #4  0xffffffff81613e46 in ext4_dirty_inode (inode=0xffff888003e7abe0, flags=<optimized out>) at fs/ext4/inode.c:6545
+
+
+
+这个函数解答了怎么通过iloc找到ext4_rawinode的
+
+```
+static inline struct ext4_inode *ext4_raw_inode(struct ext4_iloc *iloc)
+{
+	return (struct ext4_inode *) (iloc->bh->b_data + iloc->offset);
+}
+```
+
+
+
+[ext4_file_operations](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_file_operations) [ext4_dir_operations](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_dir_operations) 对vfs的文件和目录接口
+
+
+
+# inode_table
+
+[ext4_inode_table_set](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_inode_table_set) 
+
+ [ext4_alloc_group_tables](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_alloc_group_tables) 这个可认为是设置inode_table的块号以及一些bitmap这个可以确定是在一个block group的开头
+
+由[__ext4_get_inode_loc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_get_inode_loc) 函数中的这块代码能确定inode_table一定是连续的  但并不能确定在创建文件时block是如何分配的  
+
+```
+block = ext4_inode_table(sb, gdp);
+	if ((block <= le32_to_cpu(EXT4_SB(sb)->s_es->s_first_data_block)) ||
+	    (block >= ext4_blocks_count(EXT4_SB(sb)->s_es))) {
+		ext4_error(sb, "Invalid inode table block %llu in "
+			   "block_group %u", block, iloc->block_group);
+		return -EFSCORRUPTED;
+	}
+	block += (inode_offset / inodes_per_block);
+```
+
+[__ext4_new_inode](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_new_inode) 这里可以关注一下  看看是怎么创建文件的  知道怎么创建  就能观察block的分配了
+
+[布局 — Linux 内核文档](https://docs.linuxkernel.org.cn/filesystems/ext4/blockgroup.html) 这个可作为ext4块组布局的参考  说白了 模式还是先确定好头部信息大小  然后去分配后面的数据块  也对  也只能这样 
+
+# 块组
+
+为什么一个块组大小默认是128M？
+
+以为块位图占了一个块 一个块是4KB  也就是4096  也就是4096 * 8(32768)个bit  也就是这么多个块 也就是4096 * 8*4096字节 4096 * 8*4096就是128MB 
+
+至于inode 就自己确定吧
