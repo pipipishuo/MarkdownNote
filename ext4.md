@@ -333,3 +333,15 @@ block = ext4_inode_table(sb, gdp);
 以为块位图占了一个块 一个块是4KB  也就是4096  也就是4096 * 8(32768)个bit  也就是这么多个块 也就是4096 * 8*4096字节 4096 * 8*4096就是128MB 
 
 至于inode 就自己确定吧
+
+
+
+# ext4  extent树
+
+参考链接 [(26 封私信 / 81 条消息) 系统性学习Ext4文件系统（图例解析） - 知乎](https://zhuanlan.zhihu.com/p/476377123) 
+
+
+
+这个图解决了数据块的布局 非常好  已经很清晰了目前
+
+![v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w](D:\MarkdownNote\assets\v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w.jpg)
