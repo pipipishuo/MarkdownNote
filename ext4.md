@@ -215,6 +215,8 @@ scsi_queue_rq 这是一个对外接口
 
 # 日志
 
+[transaction.c - fs/jbd2/transaction.c - Linux source code v6.16.3 - Bootlin Elixir Cross Referencer](https://elixir.bootlin.com/linux/v6.16.3/source/fs/jbd2/transaction.c#L2514)
+
 [__jbd2_journal_file_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__jbd2_journal_file_buffer) 
 
 [do_get_write_access](https://elixir.bootlin.com/linux/v6.16.3/C/ident/do_get_write_access)
