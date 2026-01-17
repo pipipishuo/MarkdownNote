@@ -274,8 +274,7 @@ qemu-system-x86_64 -kernel /mnt/c/Users/admin/linux/linux-6.16.3/arch/x86/boot/b
 公司笔记本
 
 ```
-qemu-system-x86_64 -kernel /mnt/c/Users/LANX/linux/linux-6.16.3/arch/x86/boot/b
-zImage  -hda /mnt/c/Users/LANX/linux/debian.img -append "root=/dev/sda1 rw" -s -S
+qemu-system-x86_64 -kernel /mnt/c/Users/LANX/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/Users/LANX/linux/debian.img -append "root=/dev/sda1 rw" -s -S
 ```
 
 自己电脑的
@@ -1525,6 +1524,29 @@ windows凭据  删除windows凭据
 
 
 
+# git使用技巧
+
+一般模式
+
+```
+git add .
+git commit -m"balabala"
+git push
+```
+
+撤销add
+
+```
+git restore --staged .
+```
+
+撤销所有修改
+
+```
+git checkout .
+```
+
+
 
 # QTCreator设置用系统编辑器打开MD文件
 
@@ -1571,3 +1593,27 @@ windows凭据  删除windows凭据
 
 
 [acpi_ps_execute_method](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_execute_method)  看这个函数中的 [acpi_ps_parse_aml](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_parse_aml) 函数  为啥叫“parse" 虚拟机！
+
+
+
+# QT能够表示的时间
+
+292278994年-2亿年多，感觉也还行。因为是用的64位，还不是全部范围 ，但也差不多。妈的64位才能表示这么大。自有后来人优化吧哈哈。不知道后来人会不会忘记这个事儿哈哈。
+
+测试代码  QT6.8.3
+
+```
+//qint64 limitMsec=~((qint64)1<<63)-1000;
+    QDateTime limitTime(QDate(292278994,1,1),QTime(0,1),Qt::LocalTime);
+    if(limitTime.isValid()){
+        QString limitStr=limitTime.toString();
+        qint64 limitMsec=QDateTime::fromMSecsSinceEpoch(0).msecsTo(limitTime);
+        qDebug()<<limitStr;
+    }
+```
+
+
+
+# 类似JVM的虚拟机
+
+[Write your Own Virtual Machine](https://www.jmeiners.com/lc3-vm/)

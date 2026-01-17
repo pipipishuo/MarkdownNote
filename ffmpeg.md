@@ -55,7 +55,19 @@ stream_component_open
 
 
 ```
-hevc_handle_packet 这句比较关键
+hevc_handle_packet 这句比较关键  说明了packet的size为啥跟packet->buf的size不一样
 if ((res = av_new_packet(pkt, sizeof(start_sequence) + len)) < 0)
+```
+
+
+
+这句代码 包含了时间基是从哪确定的信息：ic->streams[pkt->stream_index]->time_base
+
+```
+pkt_in_play_range = duration == AV_NOPTS_VALUE ||
+                (pkt_ts - (stream_start_time != AV_NOPTS_VALUE ? stream_start_time : 0)) *
+                av_q2d(ic->streams[pkt->stream_index]->time_base) -
+                (double)(start_time != AV_NOPTS_VALUE ? start_time : 0) / 1000000
+                <= ((double)duration / 1000000);
 ```
 
