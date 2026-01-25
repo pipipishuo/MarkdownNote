@@ -7,3 +7,15 @@
 bar寄存器解答了cpu的物理地址怎么映射到外设上
 
 但现在还有个问题 就是pci的配置空间怎么进行内存映射
+
+
+
+
+
+[pci_bus_type](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pci_bus_type)  这应该是个重要的变量
+
+ [acpi_device_add](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_device_add) 
+
+[__pci_device_probe](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__pci_device_probe)
+
+[acpi_bus_scan](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_bus_scan) 

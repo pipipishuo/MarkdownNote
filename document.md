@@ -280,8 +280,7 @@ qemu-system-x86_64 -kernel /mnt/c/Users/LANX/linux/linux-6.16.3/arch/x86/boot/bz
 自己电脑的
 
 ```
-qemu-system-x86_64 -kernel /mnt/c/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/
-linux/debian.img -append "root=/dev/sda1 rw" -s -S
+qemu-system-x86_64 -kernel /mnt/c/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda /mnt/c/linux/debian.img -append "root=/dev/sda1 rw" -s -S
 ```
 
 
