@@ -1244,6 +1244,16 @@ hook_create_mount
 qt-online-installer-windows-x64-4.10.0.exe --mirror http://mirrors.ustc.edu.cn/qtproject
 ```
 
+上面的办法傻逼了
+
+把下面的url放到资料档案库中
+
+```
+https://mirrors.ustc.edu.cn/qtproject/online/qtsdkrepository/windows_x86/root/qt/
+```
+
+
+
 # 编译GLIBC
 
 [下载链接](https://mirror-hk.koddos.net/lfs/lfs-packages/12.4/)
@@ -1617,3 +1627,15 @@ git checkout .
 # 类似JVM的虚拟机
 
 [Write your Own Virtual Machine](https://www.jmeiners.com/lc3-vm/)
+
+
+
+# cmake与vcpkg结合着来
+
+```
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.cmake
+```
+
+# QT安装包网址
+
+[Download Qt | Get Qt Online Installer](https://www.qt.io/development/download-qt-installer)
