@@ -71,3 +71,87 @@ pkt_in_play_range = duration == AV_NOPTS_VALUE ||
                 <= ((double)duration / 1000000);
 ```
 
+
+
+保留的命令行参数
+
+```
+rtsp://admin:1a2s3d4f5g@192.168.8.64:554/ -rtsp_transport tcp -fflags nobuffer -flags low_delay -analyzeduration 1000000 -max_delay 500000 -reorder_queue_size 4 -infbuf
+```
+
+
+
+读取组播时的方法
+
+handle_packets
+
+
+
+mpegts_push_data
+
+pes->pts = ff_parse_pes_pts(r);
+
+
+
+1378行 ret = new_pes_packet(pes, ts->pkt);
+
+# 查找inputformat
+
+av_probe_input_format3
+
+# 从这定的dts
+
+
+
+```
+pkt->dts = select_from_pts_buffer(st, sti->pts_buffer, pkt->dts);
+```
+
+
+
+# 关键变量
+
+mov_default_parse_table
+
+ff_raw_read_partial_packet
+
+udp_read
+
+# 读mp4的方法
+
+mov_read_packet
+
+
+
+# 几个关键的box
+
+
+
+## stco
+
+|                |                                                    |
+| -------------- | -------------------------------------------------- |
+| 理解           | chunk偏移哦哦哦  就是说这个chunk是在文件的哪个位置 |
+| 章节           | 8.7.5 Chunk Offset Box                             |
+| ffmpeg对应方法 | mov_read_stco                                      |
+
+
+
+## stss
+
+|                |                        |
+| -------------- | ---------------------- |
+| 理解           | 记载关键字索引         |
+| 章节           | 8.7.5 Chunk Offset Box |
+| ffmpeg对应方法 | mov_read_stss          |
+
+
+
+## stsd
+
+|                |                                |
+| -------------- | ------------------------------ |
+| 理解           | 记载样本表的具体细节信息  比如 |
+| 章节           | 8.7.5 Chunk Offset Box         |
+| ffmpeg对应方法 | mov_read_stsd                  |
+
