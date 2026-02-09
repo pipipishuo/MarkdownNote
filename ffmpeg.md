@@ -80,6 +80,10 @@ rtsp://admin:1a2s3d4f5g@192.168.8.64:554/ -rtsp_transport tcp -fflags nobuffer -
 ```
 
 
+绑定专门网卡时用这个
+```
+udp://@226.0.0.1:7051 -localaddr 172.20.112.1 -fflags nobuffer -flags low_delay -analyzeduration 1000000 -max_delay 500000 -infbuf
+```
 
 读取组播时的方法
 
@@ -155,3 +159,60 @@ mov_read_packet
 | 章节           | 8.7.5 Chunk Offset Box         |
 | ffmpeg对应方法 | mov_read_stsd                  |
 
+
+
+# ffplay时间控制
+
+## decoder_decode_frame
+
+首先是这个if  基本只要不中断  就会进if  if里面的那个do while  是从解码器中获取帧数据，只要不是again或者能获取到就一直死循环的获取
+
+如果是again 就从Decoder的队列中拿一个pkt，必须是serial一样的  这么看 serial是为了分清是flush过的吗 因为只有开始和fluah   serial才会增加
+
+将拿到的pkt发送给d->avctx
+
+总的来说 这就是个拿到有效帧的函数  也就这一个作用  当然也做了serial不一样时的逻辑处理（这个可能对如果飞机断电的情况起到一定的参考价值）
+
+# read_thread
+
+拿到帧 放进去
+
+# video_thread
+
+拿到帧后 计算好时间
+
+
+
+# video_refresh
+
+更新视频
+
+
+
+| windex | size | queue |
+| ------ | ---- | ----- |
+| 1      | 1    | 1     |
+| 2      | 2    | 1,1   |
+| 0      | 3    | 1,1,1 |
+
+
+
+| rindex | size | queue |
+| ------ | ---- | ----- |
+| 1      | 2    | 0,1,1 |
+| 2      | 1    | 0,0,1 |
+|        |      |       |
+
+
+
+# 数据记录日志
+
+0207的实时传输就明显能看出ffplay的不卡  地面站的卡 所以很有必要迁移过来
+
+
+
+# 迁移日志
+
+时间控制迁移在笔记本上C:\Users\LANX\Documents\ffplayimmigrant这里
+
+基本迁移在C:\Users\LANX\Documents\untitled3这里

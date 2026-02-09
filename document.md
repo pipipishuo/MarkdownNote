@@ -1639,3 +1639,16 @@ cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.c
 # QT安装包网址
 
 [Download Qt | Get Qt Online Installer](https://www.qt.io/development/download-qt-installer)
+
+
+
+
+
+# FreeBSD编译
+
+
+
+```
+MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=arm64 TARGET_ARCH=aarch64 buildworld --debug --cross-bindir=/lib/llvm-19/bin/
+```
+
