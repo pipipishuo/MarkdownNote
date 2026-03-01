@@ -285,6 +285,18 @@ qemu-system-x86_64 -kernel /mnt/c/linux/linux-6.16.3/arch/x86/boot/bzImage  -hda
 
 
 
+gdb 命令
+
+```
+(gdb) file vmlinux
+Reading symbols from vmlinux...
+(gdb) target remote :1234
+Remote debugging using :1234
+0x000000000000fff0 in ?? ()
+```
+
+
+
 # qemu中使用自己的镜像启动debian（nvme硬盘）
 
 
