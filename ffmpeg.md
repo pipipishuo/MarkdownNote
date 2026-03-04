@@ -216,3 +216,12 @@ mov_read_packet
 时间控制迁移在笔记本上C:\Users\LANX\Documents\ffplayimmigrant这里
 
 基本迁移在C:\Users\LANX\Documents\untitled3这里
+
+
+
+# 错误代码查询
+
+搜EAGAIN的定义
+
+
+
