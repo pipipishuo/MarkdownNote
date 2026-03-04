@@ -1648,7 +1648,15 @@ cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.c
 
 
 
+参考链接[Chapter 26. Updating and Upgrading FreeBSD | FreeBSD Documentation Portal](https://docs.freebsd.org/en/books/handbook/cutting-edge/#building-on-non-freebsd-hosts) 
+
 ```
-MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=arm64 TARGET_ARCH=aarch64 buildworld --debug --cross-bindir=/lib/llvm-19/bin/
+sudo apt-get install python3
+sudo apt-get install clang
+mkdir /tmp/obj
+sudo apt install lld
+sudo apt install time
+sudo apt-get install libarchive-dev
+MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=amd64 TARGET_ARCH=amd64 buildworld --debug --cross-bindir=/lib/llvm-19/bin/
 ```
 
