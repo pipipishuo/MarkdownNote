@@ -1,6 +1,10 @@
 https://kotlinlang.org/docs/kotlin-tour-hello-world.html#string-templates
 
+
 [Kotlin Docs | Kotlin Documentation](https://kotlinlang.org/docs/home.html)
+
+[Kotlin Multiplatform quickstart | Kotlin Multiplatform Documentation](https://kotlinlang.org/docs/multiplatform/quickstart.html#get-help) 
+
 
 这个函数包含了好几个知识点
 
@@ -31,3 +35,26 @@ fun toSeconds(time: String): (Int) -> Int = when (time) {
 ## Extension properties
 
 However, extension properties in Kotlin do not have backing fields. 
+
+
+
+# Trailing lambdas
+
+
+
+1当lamda表达式是函数的最后一个参数时  就可以把他用大括号去写
+
+2如果lamda表达式只有一个参数的时候 可以用it关键字代替就不用写箭头啥的了
+
+示例代码
+
+```
+
+fun main() {
+    repeat(3) {
+        println("Iteration $it")
+        println("Iteration ")
+    }
+}
+```
+
