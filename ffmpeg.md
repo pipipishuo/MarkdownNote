@@ -225,3 +225,6 @@ mov_read_packet
 
 
 
+# 时统
+
+set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);

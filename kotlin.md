@@ -1,6 +1,6 @@
 https://kotlinlang.org/docs/kotlin-tour-hello-world.html#string-templates
 
-
+[Kotlin Docs | Kotlin Documentation](https://kotlinlang.org/docs/home.html)
 
 这个函数包含了好几个知识点
 

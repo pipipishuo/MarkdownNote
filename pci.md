@@ -19,3 +19,7 @@ bar寄存器解答了cpu的物理地址怎么映射到外设上
 [__pci_device_probe](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__pci_device_probe)
 
 [acpi_bus_scan](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_bus_scan) 
+
+
+
+好多pci总线的资料我都写在driver.md中了  没办法 都连着呢
