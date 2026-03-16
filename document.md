@@ -1672,3 +1672,22 @@ sudo apt-get install libarchive-dev
 MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=amd64 TARGET_ARCH=amd64 buildworld --debug --cross-bindir=/lib/llvm-19/bin/
 ```
 
+
+
+# idea破解
+
+[(30 封私信 / 81 条消息) IDEA 2025.3 最新破解版安装教程 - 知乎](https://zhuanlan.zhihu.com/p/1995803318975485513)
+
+
+
+# 打包kmp
+
+```
+./gradlew :composeApp:assembleDebug
+```
+
+
+
+# 安卓源码查看
+
+[platform/superproject - Android Code Search](https://cs.android.com/android/platform/superproject)

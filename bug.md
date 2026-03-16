@@ -1,1 +1,3 @@
 [220818 – kernel 6.8.0-88: General Protection Fault (GPF) in ext4 while running 'umount': RIP: 0010:dentry_unlink_inode+0x52/0x150](https://bugzilla.kernel.org/show_bug.cgi?id=220818)  关于ext4文件系统的bug  正好研究研究哈哈哈
+
+[221183 – Multiple ACPI errors for HP OmniBook 7 Laptop 16-bh0xxx](https://bugzilla.kernel.org/show_bug.cgi?id=221183) 

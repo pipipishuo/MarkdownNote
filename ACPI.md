@@ -8,6 +8,18 @@
 
   A model of power (and system) management in which the OS plays a central role and uses global information to optimize system behavior for the task at hand.
 
+解析aml的[acpi_ps_parse_loop](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_parse_loop) 
+
+https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ex_access_region 
+
+[acpi_ev_install_space_handler](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ev_install_space_handler) 
+
+ [acpi_ev_find_region_handler](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ev_find_region_handler) 
+
+
+
+https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ev_attach_region  这个像
+
 # 2. Definition of Terms
 
 ## Platform
