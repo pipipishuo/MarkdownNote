@@ -1317,7 +1317,7 @@ npm start
 
 ```
 进入源码目录
-cscope -b -v
+cscope -b -R -v
 ```
 
 在vim中加入数据索引文件
@@ -1331,6 +1331,19 @@ cscope -b -v
 ```
 :cs f g 结构体名称
 ```
+
+
+
+# 查找代码目录中某一字符串
+
+
+
+```
+进到代码根目录
+grep -r "No handler for Region" .
+```
+
+
 
 # 重装系统后需要的命令
 

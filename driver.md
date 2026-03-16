@@ -216,6 +216,13 @@ PCI_USER_READ_CONFIG(dword, u32)
 PCI_USER_WRITE_CONFIG(byte, u8)
 PCI_USER_WRITE_CONFIG(word, u16)
 PCI_USER_WRITE_CONFIG(dword, u32)
+
+PCI_OP_READ(byte, u8, 1)
+PCI_OP_READ(word, u16, 2)
+PCI_OP_READ(dword, u32, 4)
+PCI_OP_WRITE(byte, u8, 1)
+PCI_OP_WRITE(word, u16, 2)
+PCI_OP_WRITE(dword, u32, 4)
 ```
 
 
@@ -295,3 +302,29 @@ usb总线的注册 [usb_bus_type](https://elixir.bootlin.com/linux/v6.16.3/C/ide
 [usb_acpi_find_companion](https://elixir.bootlin.com/linux/v6.16.3/C/ident/usb_acpi_find_companion) 这个能够引导我一窥acpi与usb是怎么连接的
 
 [acpi_bus_scan](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_bus_scan) acpi枚举设备--各种设备  处理器总线等等
+
+
+
+CPU如何通过内存映射访问PCIE？
+
+三个阶段：
+
+1 探测所需空间，通过读取配置空间 [pci_conf1_read](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pci_conf1_read) 
+
+2 写入配置  配置bar地址(物理地址)[pci_std_update_resource](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pci_std_update_resource) 
+
+3 内存映射  (虚拟地址到物理地址的映射)[pci_iomap_range](https://elixir.bootlin.com/linux/v6.16.3/C/ident/pci_iomap_range)
+
+
+
+比方说
+
+1 cpu读取pcie配置空间，探测到需要1M的地址空间
+
+2 cpu决定将0xcccc作为该设备的起始物理地址 就将0xcccc写入bar寄存器
+
+3 cpu将虚拟地址0xffff 映射到0xcccc   
+
+
+
+此时cpu执行“往0xffff的虚拟地址写入1”的指令，经过地址转换  转换为“往 0xcccc的物理地址写入1”然后通过地址总线  找到0xcccc物理地址是该pci设备拥有  就往该pci设备写入了1

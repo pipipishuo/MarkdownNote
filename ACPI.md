@@ -1,5 +1,13 @@
 声明网址  [3. ACPI Concepts — ACPI Specification 6.4 documentation](https://uefi.org/htmlspecs/ACPI_Spec_6_4_html/03_ACPI_Concepts/ACPI_Concepts.html)
 
+
+
+相关的解析函数[acpi_ps_parse_loop](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_parse_loop) 
+
+[AML_IF_OP](https://elixir.bootlin.com/linux/v6.16.3/C/ident/AML_IF_OP)   有用的宏
+
+[AML_REGION_OP](https://elixir.bootlin.com/linux/v6.16.3/C/ident/AML_REGION_OP) 
+
 哦对  ACPI是个声明  PCI总线是支持这个声明的  所以PCI的配置空间地址是通过ACPI表获取的
 
 话说OSPM是写在固件里面的吗？不是 还是操作系统  有定义作为依据
