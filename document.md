@@ -1704,3 +1704,9 @@ MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=amd64 TARGET_ARCH=amd6
 # 安卓源码查看
 
 [platform/superproject - Android Code Search](https://cs.android.com/android/platform/superproject)
+
+
+
+# 一加12驱动  不装调试不了
+
+https://oppousbdriver.com/
