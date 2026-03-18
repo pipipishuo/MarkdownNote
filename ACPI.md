@@ -28,6 +28,44 @@ https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ex_access_region
 
 https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ev_attach_region  这个像
 
+对  那个只是遍历 这个才是真正干活的东西
+
+
+
+我现在觉得asl就是声明加操作  声明一个region然后操作
+
+
+
+典型的asl Field操作 就是这样  格式跟声明说的不一样  傻逼
+
+```
+Field (CMS0, ByteAcc, NoLock, Preserve)
+{
+    RTSE,   8,      // <-- 这是一个 FieldUnit
+    RTSA,   8,      // <-- 这是另一个 FieldUnit
+    RTMN,   8,      // <-- 这是另一个 FieldUnit
+    RTMA,   8,      // <-- ...
+    RTHR,   8,      // <-- FieldUnitList 就是所有这些单元
+    RTHA,   8,      // <-- 组成的列表
+    RTDY,   8, 
+    RTDE,   8
+}
+```
+
+
+
+
+
+[acpi_ds_auto_serialize_method](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ds_auto_serialize_method) 这个
+
+
+
+### ObjectType  比较重要的操作 获取对象类型
+
+[acpi_ps_push_scope](https://elixir.bootlin.com/linux/v6.16.3/C/ident/acpi_ps_push_scope)  这个应该跟scope有关
+
+
+
 # 2. Definition of Terms
 
 ## Platform
