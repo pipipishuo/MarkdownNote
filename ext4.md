@@ -330,6 +330,20 @@ block = ext4_inode_table(sb, gdp);
 
 [布局 — Linux 内核文档](https://docs.linuxkernel.org.cn/filesystems/ext4/blockgroup.html) 这个可作为ext4块组布局的参考  说白了 模式还是先确定好头部信息大小  然后去分配后面的数据块  也对  也只能这样 
 
+[ext4_sops](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_sops)  比较重要的变量 
+
+其实主要就是增删写读查 改权限 这六个操作  把这五个操作搞明白基本就能把这个文件系统搞懂了
+
+[ext4_setattr](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_setattr) 修改属性的 组 权限等等 好像不多
+
+# __ext4_new_inode
+
+基本流程就是先找到group  然后看内部哪个inode没被用到  再一加的就行 
+
+
+
+
+
 # 块组
 
 为什么一个块组大小默认是128M？
@@ -348,4 +362,29 @@ block = ext4_inode_table(sb, gdp);
 
 这个图解决了数据块的布局 非常好  已经很清晰了目前
 
-![v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w](D:\MarkdownNote\assets\v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w.jpg)
+![v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w](.\assets\v2-39f962ef5f3ae0aebcd789dfe61f77b9_1440w.jpg)
+
+
+
+# Buddy
+
+[mb_buddy_mark_free](https://elixir.bootlin.com/linux/v6.16.3/C/ident/mb_buddy_mark_free)
+
+[ext4_mb_init_cache](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_mb_init_cache) 这个应该是讲他的布局
+
+
+
+[ext4_mb_mark_free_simple](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_mb_mark_free_simple)  很好的函数  能把buddy位图的意义讲清楚了
+
+尤其其中的这两句函数  真TM的精髓 巧妙
+
+```
+max = ffs(first | border) - 1;
+
+		/* find how many blocks of power 2 we need to mark */
+		min = fls(len) - 1;
+
+		if (max < min)
+			min = max;
+```
+
