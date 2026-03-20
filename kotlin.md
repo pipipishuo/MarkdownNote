@@ -58,3 +58,77 @@ fun main() {
 }
 ```
 
+
+
+
+
+# 导航
+
+
+
+感觉cmp这可以用这个NavDisplay
+
+滑动处理非常不错的示例
+
+```
+@Composable
+fun SwipeBackHandler(
+    backStack: MutableList<Any>, // 来自 Navigation 3 的 backStack
+    enabled: Boolean = true,
+    onSwipeBack: () -> Unit = { backStack.removeLastOrNull() }
+) {
+    if (!enabled) return
+
+    val maxSwipeDistance = 200.dp
+    val threshold = 0.3f // 滑动超过30%即触发返回
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                // 检测水平拖动
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        // 可选：只有从屏幕左边缘开始的拖动才处理
+                        // 这里简化为所有水平拖动
+                    },
+                    onDragEnd = {
+                        // 滑动结束时，如果超过了阈值，执行返回
+                        if (backStack.size > 1) { // 确保不是首页
+                            onSwipeBack()
+                        }
+                    }
+                ) { change, dragAmount ->
+                    // 这里可以处理滑动过程中的动画（例如页面跟随移动）
+                    change.consume()
+                }
+            }
+    )
+}
+
+// 在你的 NavDisplay 中使用
+@Composable
+fun MyAppNavHost() {
+    val backStack = remember { mutableStateListOf<Any>(Home) }
+
+    NavDisplay(
+        backStack = backStack,
+        onBack = { backStack.removeLastOrNull() }
+    ) {
+        entry<Home> {
+            // 首页不需要左滑返回，可以禁用或显示提示
+            SwipeBackHandler(backStack, enabled = false)
+            HomeScreen()
+        }
+        entry<Detail> { entry ->
+            // 详情页启用左滑返回
+            SwipeBackHandler(backStack, enabled = true) {
+                backStack.removeLastOrNull()
+            }
+            DetailScreen(id = entry.argument.id)
+        }
+    }
+}
+```
+
+[Jetpack Compose 和 Compose Multiplatform 还有 KMP 的关系今天刚好看到官方发布 - 掘金](https://juejin.cn/post/7462776363734564916) 

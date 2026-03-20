@@ -366,6 +366,180 @@ block = ext4_inode_table(sb, gdp);
 
 
 
+[ext4_inode](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_inode) 结构体是对应的硬盘的结构  [ext4_inode_info](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_inode_info) 这是内存中的
+
+```
+/*
+ * Structure of an inode on the disk
+ */
+struct ext4_inode 
+
+/*
+ * fourth extended file system inode data in memory
+ */
+struct ext4_inode_info 
+```
+
+
+
+ext4_extent 是extent在硬盘里面的结构  有逻辑块号也有真实的物理块号
+
+```
+/*
+ * This is the extent on-disk structure.
+ * It's used at the bottom of the tree.
+ */
+struct ext4_extent {
+	__le32	ee_block;	/* first logical block extent covers */
+	__le16	ee_len;		/* number of blocks covered by extent */
+	__le16	ee_start_hi;	/* high 16 bits of physical block */
+	__le32	ee_start_lo;	/* low 32 bits of physical block */
+};
+```
+
+ext4_extent 应该只在叶子节点上  飞叶子结点都是ext4_extent_idx 证据如下 看注释
+
+```
+/*
+ * This is index on-disk structure.
+ * It's used at all the levels except the bottom.
+ */
+struct ext4_extent_idx {
+	__le32	ei_block;	/* index covers logical blocks from 'block' */
+	__le32	ei_leaf_lo;	/* pointer to the physical block of the next *
+				 * level. leaf or next index could be there */
+	__le16	ei_leaf_hi;	/* high 16 bits of physical block */
+	__u16	ei_unused;
+};
+
+```
+
+
+
+每一个块必有一个header 用来标识 是node还是idx还是extent
+
+```
+/*
+ * Each block (leaves and indexes), even inode-stored has header.
+ */
+struct ext4_extent_header {
+	__le16	eh_magic;	/* probably will support different formats */
+	__le16	eh_entries;	/* number of valid entries */
+	__le16	eh_max;		/* capacity of store in entries */
+	__le16	eh_depth;	/* has tree real underlying blocks? */
+	__le32	eh_generation;	/* generation of the tree */
+};
+```
+
+
+
+ [EXT_FIRST_INDEX](https://elixir.bootlin.com/linux/v6.16.3/C/ident/EXT_FIRST_INDEX)([eh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/eh)) 这个宏解释了header与idx 在硬盘中如何布局 也就是header后面跟着idx 
+
+[ext4_iloc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_iloc) 也是个重要的结构
+
+```
+/*
+ * Describe an inode's exact location on disk and in memory
+ */
+struct ext4_iloc
+{
+	struct buffer_head *bh;
+	unsigned long offset;
+	ext4_group_t block_group;
+};
+```
+
+
+
+[__ext4_get_inode_loc](https://elixir.bootlin.com/linux/v6.16.3/C/ident/__ext4_get_inode_loc)  里面交代了inode是在group的固定的表里面的
+
+```
+static int __ext4_get_inode_loc(struct super_block *sb, unsigned long ino,
+				struct inode *inode, struct ext4_iloc *iloc,
+				ext4_fsblk_t *ret_block)
+{
+....
+	block = ext4_inode_table(sb, gdp);
+	if ((block <= le32_to_cpu(EXT4_SB(sb)->s_es->s_first_data_block)) ||
+	    (block >= ext4_blocks_count(EXT4_SB(sb)->s_es))) {
+		ext4_error(sb, "Invalid inode table block %llu in "
+			   "block_group %u", block, iloc->block_group);
+		return -EFSCORRUPTED;
+	}
+	block += (inode_offset / inodes_per_block);
+
+	bh = sb_getblk(sb, block);
+....
+}
+
+ext4_fsblk_t ext4_inode_table(struct super_block *sb,
+			      struct ext4_group_desc *bg)
+{
+	return le32_to_cpu(bg->bg_inode_table_lo) |
+		(EXT4_DESC_SIZE(sb) >= EXT4_MIN_DESC_SIZE_64BIT ?
+		 (ext4_fsblk_t)le32_to_cpu(bg->bg_inode_table_hi) << 32 : 0);
+}
+```
+
+
+
+看这个不就好啦
+
+```
+/*
+ * Structure of a blocks group descriptor
+ */
+struct ext4_group_desc
+{
+	__le32	bg_block_bitmap_lo;	/* Blocks bitmap block */
+	__le32	bg_inode_bitmap_lo;	/* Inodes bitmap block */
+	__le32	bg_inode_table_lo;	/* Inodes table block */
+	__le16	bg_free_blocks_count_lo;/* Free blocks count */
+	__le16	bg_free_inodes_count_lo;/* Free inodes count */
+	__le16	bg_used_dirs_count_lo;	/* Directories count */
+	__le16	bg_flags;		/* EXT4_BG_flags (INODE_UNINIT, etc) */
+	__le32  bg_exclude_bitmap_lo;   /* Exclude bitmap for snapshots */
+	__le16  bg_block_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+bbitmap) LE */
+	__le16  bg_inode_bitmap_csum_lo;/* crc32c(s_uuid+grp_num+ibitmap) LE */
+	__le16  bg_itable_unused_lo;	/* Unused inodes count */
+	__le16  bg_checksum;		/* crc16(sb_uuid+group+desc) */
+	__le32	bg_block_bitmap_hi;	/* Blocks bitmap block MSB */
+	__le32	bg_inode_bitmap_hi;	/* Inodes bitmap block MSB */
+	__le32	bg_inode_table_hi;	/* Inodes table block MSB */
+	__le16	bg_free_blocks_count_hi;/* Free blocks count MSB */
+	__le16	bg_free_inodes_count_hi;/* Free inodes count MSB */
+	__le16	bg_used_dirs_count_hi;	/* Directories count MSB */
+	__le16  bg_itable_unused_hi;    /* Unused inodes count MSB */
+	__le32  bg_exclude_bitmap_hi;   /* Exclude bitmap block MSB */
+	__le16  bg_block_bitmap_csum_hi;/* crc32c(s_uuid+grp_num+bbitmap) BE */
+	__le16  bg_inode_bitmap_csum_hi;/* crc32c(s_uuid+grp_num+ibitmap) BE */
+	__u32   bg_reserved;
+};
+```
+
+
+
+看见没  这个文件系统是不管你硬盘真实的物理块号的 我就认512byte是一块
+
+```
+/**
+ * The type used for indexing onto a disc or disc partition.
+ *
+ * Linux always considers sectors to be 512 bytes long independently
+ * of the devices real block size.
+ *
+ * blkcnt_t is the type of the inode's block count.
+ */
+typedef u64 sector_t;
+typedef u64 blkcnt_t;
+```
+
+
+
+[sb_getblk](https://elixir.bootlin.com/linux/v6.16.3/C/ident/sb_getblk)  获取块数据
+
+
+
 # Buddy
 
 [mb_buddy_mark_free](https://elixir.bootlin.com/linux/v6.16.3/C/ident/mb_buddy_mark_free)
@@ -388,3 +562,70 @@ max = ffs(first | border) - 1;
 			min = max;
 ```
 
+
+
+# 关于和sysfs的关系
+
+[ext4_register_sysfs](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_register_sysfs)
+
+[/](https://elixir.bootlin.com/linux/v6.16.3/source) [fs](https://elixir.bootlin.com/linux/v6.16.3/source/fs) / [ext4](https://elixir.bootlin.com/linux/v6.16.3/source/fs/ext4) / [sysfs.c](https://elixir.bootlin.com/linux/v6.16.3/source/fs/ext4/sysfs.c)  基本都在这文件里呢
+
+这几个变量说明了是怎么操作的
+
+```
+static const struct sysfs_ops ext4_attr_ops = {
+	.show	= ext4_attr_show,
+	.store	= ext4_attr_store,
+};
+
+static const struct kobj_type ext4_sb_ktype = {
+	.default_groups = ext4_groups,
+	.sysfs_ops	= &ext4_attr_ops,
+	.release	= ext4_sb_release,
+};
+
+static const struct kobj_type ext4_feat_ktype = {
+	.default_groups = ext4_feat_groups,
+	.sysfs_ops	= &ext4_attr_ops,
+	.release	= ext4_feat_release,
+};
+
+```
+
+kobject跟attribute怎么联系看这里	
+
+```
+struct kobject {
+    const char *name;
+    struct kobject *parent;
+    struct kobj_type *ktype;    // 关键：ktype 定义了属性
+    // ...
+};
+
+struct kobj_type {
+    void (*release)(struct kobject *kobj);
+    const struct sysfs_ops *sysfs_ops;      // 操作函数（连接桥梁）
+    const struct attribute **default_attrs;  // 默认属性列表
+    const struct attribute_group **default_groups;
+};
+```
+
+
+
+
+
+组个数果然是在super块里面呢
+
+```
+static int ext4_check_geometry(struct super_block *sb,
+			       struct ext4_super_block *es)
+{
+...
+sbi->s_groups_count = blocks_count;
+...
+}
+```
+
+
+
+[ext4_fill_raw_inode](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_fill_raw_inode) 把内存中的inode信息填到块中
