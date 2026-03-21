@@ -1250,20 +1250,6 @@ $2 = {int (struct libmnt_context *, struct hookset_hook *)} 0x7ffff7f76740 <call
 hook_create_mount
 ```
 
-# QT安装镜像命令
-
-```
-qt-online-installer-windows-x64-4.10.0.exe --mirror http://mirrors.ustc.edu.cn/qtproject
-```
-
-上面的办法傻逼了
-
-把下面的url放到资料档案库中
-
-```
-https://mirrors.ustc.edu.cn/qtproject/online/qtsdkrepository/windows_x86/root/qt/
-```
-
 
 
 # 编译GLIBC
@@ -1665,9 +1651,27 @@ cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=D:\vcpkg\scripts\buildsystems\vcpkg.c
 
 [Download Qt | Get Qt Online Installer](https://www.qt.io/development/download-qt-installer)
 
+[Index of /archive/qt](https://download.qt.io/archive/qt/)  这个能下多个版本的
+
+#  QT安装镜像命令
+
+```
+qt-online-installer-windows-x64-4.10.0.exe --mirror http://mirrors.ustc.edu.cn/qtproject
+```
+
+上面的办法傻逼了
+
+把下面的url放到资料档案库中
+
+```
+https://mirrors.ustc.edu.cn/qtproject/online/qtsdkrepository/windows_x86/root/qt/
+```
 
 
 
+# QT所有版本显示
+
+在最终的那个选择界面 有个显示下拉框 把archive选上 能更新出不少版本
 
 # FreeBSD编译
 
@@ -1710,3 +1714,176 @@ MAKEOBJDIRPREFIX=/tmp/obj tools/build/make.py -j 8 TARGET=amd64 TARGET_ARCH=amd6
 # 一加12驱动  不装调试不了
 
 https://oppousbdriver.com/
+
+
+
+# kobject示例
+
+在wsl上能运行  注:公司的台式机  需要编译wsl内核详情请看本文档《WSL中安装自定义Kernel》
+
+mian.c代码
+
+```
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/time.h>
+#include <linux/fs.h>
+#include <linux/seq_file.h>
+#include <linux/slab.h>
+#include <linux/proc_fs.h>
+#include <linux/part_stat.h>
+#include <linux/kobject.h>
+
+struct attribute attr1={
+    .name="attri1",
+    .mode= 0444
+};
+static struct attribute* ext4_attrs[] = {
+    &attr1
+};
+ATTRIBUTE_GROUPS(ext4);
+static ssize_t ext4_attr_show(struct kobject* kobj,
+    struct attribute* attr, char* buf)
+{
+    
+    return sysfs_emit(buf, "fuck\n");
+}
+static ssize_t ext4_attr_store(struct kobject* kobj,
+    struct attribute* attr,
+    const char* buf, size_t len)
+{
+    return 0;
+}
+static const struct sysfs_ops ext4_attr_ops = {
+    .show = ext4_attr_show,
+    .store = ext4_attr_store,
+};
+static void ext4_feat_release(struct kobject* kobj)
+{
+    kfree(kobj);
+}
+struct kobject* ext4_root;
+static const struct kobj_type ext4_feat_ktype = {
+    .default_groups = ext4_groups,
+    .sysfs_ops = &ext4_attr_ops,
+    .release = ext4_feat_release,
+};
+static int __init init_hello_module(void)                //__init进行注明
+{
+    int err;
+    ext4_root = kzalloc(sizeof(*ext4_root), GFP_KERNEL);
+    err=kobject_init_and_add(ext4_root, &ext4_feat_ktype,
+        fs_kobj, "dsdfsdfsdfsdfsd");
+    if (err) {
+        kobject_put(ext4_root);
+        return err;
+    }
+    return 0;
+}
+
+static void __exit exit_hello_module(void)              //__exit进行注明
+{
+    kobject_put(ext4_root);
+    return;
+}
+
+
+MODULE_LICENSE("GPL");                             //模块许可证声明（必须要有）
+module_init(init_hello_module);                    //module_init()宏，用于初始化
+module_exit(exit_hello_module);                    //module_exit()宏，用于析构
+```
+
+MakeFile
+
+```
+obj-m := main.o
+all:
+	make -C /mnt/c/Users/admin/linux/WSL2-Linux-Kernel-linux-msft-wsl-6.6.y/modules/lib/modules/6.6.87.2-microsoft-standard-WSL2/build M=$(PWD) modules
+
+```
+
+
+
+# mutt
+
+mutt只是个界面 同步用mbsyncrc 啊 这种设计哲学真美
+
+~/.muttrc 文件内容 授权码每次都新弄一个
+
+```
+set editor = "vim"
+set sendmail="/usr/bin/esmtp"
+set envelope_from=yes
+set from="shuo chen<1289151713@qq.com>"
+set use_from=yes
+set edit_headers=yes
+
+#
+set folder = "~/Maildir"
+set spoolfile = "+INBOX"
+set mbox_type = Maildir
+set postponed = "+Drafts"
+macro index S "!mbsync -a\n"
+# IMAP
+set imap_user = "1289151713@qq.com"
+set imap_pass = "授权码"
+
+set smtp_url = "smtps://1289151713@qq.com@smtp.qq.com:465"
+set smtp_pass = "授权码"
+
+
+set folder_format = "%2C %t %N %F %2l %f"
+set imap_keepalive = 300
+set mail_check = 60
+
+set sort = "reverse-date"
+
+set index_format = "%4C %Z %{%b %d %H:%M} %-15.15L (%4l) %s"
+
+set pager_index_lines = 20
+```
+
+~/.esmtprc
+
+```
+identity "1289151713@qq.com"
+hostname smtp.qq.com:587
+username "1289151713@qq.com"
+password "授权码"
+starttls required
+```
+
+~/.mbsyncrc
+
+```
+IMAPAccount qq
+Host imap.qq.com
+User 1289151713@qq.com
+Pass 授权码
+TLSType IMAPS
+
+
+IMAPStore qq-remote
+Account qq
+
+
+MaildirStore qq-local
+Path ~/Maildir/
+Inbox ~/Maildir/INBOX
+
+Channel qq
+Master :qq-remote:
+Slave :qq-local:
+Patterns *
+Create Both
+Expunge Both
+SyncState *
+```
+
+
+
+# linux讨论组
+
+[public-inbox listing](https://lore.kernel.org/) 
+
+https://marc.info/?l=linux-fsdevel   能查历史信息

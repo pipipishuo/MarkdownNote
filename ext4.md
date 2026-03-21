@@ -629,3 +629,94 @@ sbi->s_groups_count = blocks_count;
 
 
 [ext4_fill_raw_inode](https://elixir.bootlin.com/linux/v6.16.3/C/ident/ext4_fill_raw_inode) 把内存中的inode信息填到块中
+
+
+
+
+
+# buffer_head相关的机制
+
+[wait_on_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/wait_on_buffer) 这个是等着更新  毫无疑问  跟锁有啥关系吗？
+
+ [get_bh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/get_bh) 
+
+[put_bh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/put_bh) 
+
+这一对是加和删buffer的引用的  估计是在删除时起作用  不能有的人用呢 你就删了
+
+
+
+
+
+[submit_bh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/submit_bh) 这个就应该是准备同步用的了  提交嘛  提交是准备读呢还是写
+
+
+
+[lock_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/lock_buffer)
+
+[unlock_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/unlock_buffer) 
+
+
+
+锁这个buffer用的  但很巧妙地是  他用的是[wait_on_bit_lock_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/wait_on_bit_lock_io) 这个锁 不是那种一般的锁  这个是专门去等待一个unsigned long *中的某个bit是否变了的  不变的话就进入睡眠  非常nice  但又没有可能陷入一直睡眠的状态呢？
+
+```
+int __sched
+__wait_on_bit_lock(struct wait_queue_head *wq_head, struct wait_bit_queue_entry *wbq_entry,
+			wait_bit_action_f *action, unsigned mode)
+{
+	int ret = 0;
+
+	for (;;) {
+		prepare_to_wait_exclusive(wq_head, &wbq_entry->wq_entry, mode);
+		if (test_bit(wbq_entry->key.bit_nr, wbq_entry->key.flags)) {
+			ret = action(&wbq_entry->key, mode);
+			/*
+			 * See the comment in prepare_to_wait_event().
+			 * finish_wait() does not necessarily takes wwq_head->lock,
+			 * but test_and_set_bit() implies mb() which pairs with
+			 * smp_mb__after_atomic() before wake_up_page().
+			 */
+			if (ret)
+				finish_wait(wq_head, &wbq_entry->wq_entry);
+		}
+		if (!test_and_set_bit(wbq_entry->key.bit_nr, wbq_entry->key.flags)) {
+			if (!ret)
+				finish_wait(wq_head, &wbq_entry->wq_entry);
+			return 0;
+		} else if (ret) {
+			return ret;
+		}
+	}
+}
+```
+
+   
+
+其中action是[bit_wait_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/bit_wait_io)  证据如下
+
+```
+
+static inline int
+wait_on_bit_lock_io(unsigned long *word, int bit, unsigned mode)
+{
+	might_sleep();
+	if (!test_and_set_bit(bit, word))
+		return 0;
+	return out_of_line_wait_on_bit_lock(word, bit, bit_wait_io, mode);
+}
+```
+
+
+
+看来锁的机制也有好多种啊 比如原子操作： [get_bh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/get_bh)  [put_bh](https://elixir.bootlin.com/linux/v6.16.3/C/ident/put_bh)  这两个就不用锁  因为是基本的数据类型
+
+比如自旋锁  最像锁的锁
+
+还有这个wait的  这种的也挺符合实际的  对 精细化嘛
+
+[wait_on_bit_lock_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/wait_on_bit_lock_io) [clear_and_wake_up_bit](https://elixir.bootlin.com/linux/v6.16.3/C/ident/clear_and_wake_up_bit) 这两个是对应的  [wait_on_bit_lock_io](https://elixir.bootlin.com/linux/v6.16.3/C/ident/wait_on_bit_lock_io) 是等着某个bit变为0并设置为1，clear_and_wake_up_bit是将这个bit设置为0并且唤醒等着的任务  更正 
+
+我草 这么多机制 亏这些开发者也能记得过来
+
+[clear_and_wake_up_bit](https://elixir.bootlin.com/linux/v6.16.3/C/ident/clear_and_wake_up_bit) 跟[unlock_buffer](https://elixir.bootlin.com/linux/v6.16.3/C/ident/unlock_buffer) 代码几乎一模一样
